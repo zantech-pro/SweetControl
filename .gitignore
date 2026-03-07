@@ -1,0 +1,42 @@
+# --- Node / React Native ---
+node_modules/
+.expo/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- Android ---
+build/
+.gradle/
+local.properties
+*.apk
+*.aab
+
+# --- iOS ---
+ios/build/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+xcuserdata/
+DerivedData/
+Podfile.lock
+Pods/
+
+# --- Backend (PHP / HostGator) ---
+# Não suba arquivos de configuração com senhas reais!
+# Crie um config.sample.php e ignore o original
+backend/config.php
+.env
+.env.local
+
+# --- IDEs / Sistema ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Logs e Temporários ---
+*.log
+temp/
