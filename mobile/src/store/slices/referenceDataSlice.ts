@@ -71,6 +71,33 @@ export const referenceDataSlice = createSlice({
       state.categorias = state.categorias.filter((item) => item.id !== action.payload);
       state.lastUpdatedAt = new Date().toISOString();
     },
+    addProdutoLocal: (state, action: PayloadAction<Produto>) => {
+      state.produtos.unshift(action.payload);
+      state.lastUpdatedAt = new Date().toISOString();
+    },
+    updateProdutoLocal: (
+      state,
+      action: PayloadAction<{
+        id: number;
+        nome: string;
+        categoria_id?: number | null;
+        preco_venda?: number | null;
+        quantidade_estoque?: number | null;
+      }>
+    ) => {
+      const produto = state.produtos.find((item) => item.id === action.payload.id);
+      if (!produto) return;
+
+      produto.nome = action.payload.nome;
+      produto.categoria_id = action.payload.categoria_id ?? null;
+      produto.preco_venda = action.payload.preco_venda ?? null;
+      produto.quantidade_estoque = action.payload.quantidade_estoque ?? null;
+      state.lastUpdatedAt = new Date().toISOString();
+    },
+    removeProdutoLocal: (state, action: PayloadAction<number>) => {
+      state.produtos = state.produtos.filter((item) => item.id !== action.payload);
+      state.lastUpdatedAt = new Date().toISOString();
+    },
     clearReferenceData: () => initialState,
   },
 });
@@ -82,6 +109,9 @@ export const {
   addCategoriaLocal,
   updateCategoriaLocal,
   removeCategoriaLocal,
+  addProdutoLocal,
+  updateProdutoLocal,
+  removeProdutoLocal,
   clearReferenceData,
 } = referenceDataSlice.actions;
 export default referenceDataSlice.reducer;
