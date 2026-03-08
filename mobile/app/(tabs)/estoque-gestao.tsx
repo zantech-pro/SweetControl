@@ -18,7 +18,10 @@ function diasParaVencer(dataValidade?: string | null) {
 export default function EstoqueGestao() {
   const dispatch = useDispatch<AppDispatch>();
   const themeName = useSelector((state: RootState) => state.theme.currentTheme);
-  const produtos = useSelector((state: RootState) => state.referenceData.produtos);
+  const activeUserId = useSelector((state: RootState) => state.session.activeUserId);
+  const produtos = useSelector((state: RootState) =>
+    state.referenceData.produtos.filter((item) => item.usuario_id === activeUserId)
+  );
   const activeTheme = themes[themeName as ThemeType] || themes.verde;
 
   const [produtoId, setProdutoId] = useState<number | null>(null);
@@ -51,10 +54,17 @@ export default function EstoqueGestao() {
     if (!produto) return;
 
     const delta = tipo === 'saida' ? -qtd : qtd;
-    dispatch(adjustProdutoEstoqueLocal({ id: produtoId, delta }));
+    dispatch(
+      adjustProdutoEstoqueLocal({
+        id: produtoId,
+        usuario_id: activeUserId ?? 1,
+        delta,
+      })
+    );
     dispatch(
       addMovimentacaoEstoqueLocal({
         id: -Date.now(),
+        usuario_id: activeUserId ?? 1,
         produto_id: produtoId,
         produto_nome: produto.nome,
         tipo_movimento: tipo,
@@ -70,8 +80,10 @@ export default function EstoqueGestao() {
         entity: 'movimentacoes_estoque',
         endpoint: '/estoque/movimentacoes/create.php',
         method: 'POST',
+        usuario_id: activeUserId ?? 1,
         payload: {
           produto_id: produtoId,
+          usuario_id: activeUserId ?? 1,
           tipo_movimento: tipo,
           quantidade: qtd,
           motivo: motivo.trim() || 'Movimento manual',
@@ -192,4 +204,3 @@ const styles = StyleSheet.create({
   buttonText: { color: '#fff', fontWeight: '700' },
   small: { color: '#666' },
 });
-

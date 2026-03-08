@@ -14,8 +14,13 @@ function monthKey(isoDate: string) {
 export default function BI() {
   const dispatch = useDispatch<AppDispatch>();
   const themeName = useSelector((state: RootState) => state.theme.currentTheme);
-  const vendas = useSelector((state: RootState) => state.business.vendas);
-  const gastos = useSelector((state: RootState) => state.business.gastosExtras);
+  const activeUserId = useSelector((state: RootState) => state.session.activeUserId);
+  const vendas = useSelector((state: RootState) =>
+    state.business.vendas.filter((item) => item.usuario_id === activeUserId)
+  );
+  const gastos = useSelector((state: RootState) =>
+    state.business.gastosExtras.filter((item) => item.usuario_id === activeUserId)
+  );
   const activeTheme = themes[themeName as ThemeType] || themes.verde;
 
   const [categoria, setCategoria] = useState('Operacional');
@@ -67,6 +72,7 @@ export default function BI() {
     dispatch(
       addGastoExtraLocal({
         id: -Date.now(),
+        usuario_id: activeUserId ?? 1,
         categoria: categoria.trim() || 'Outros',
         descricao: descricao.trim() || 'Sem descricao',
         valor: v,
@@ -79,7 +85,9 @@ export default function BI() {
         entity: 'gastos_extras',
         endpoint: '/gastos/create.php',
         method: 'POST',
+        usuario_id: activeUserId ?? 1,
         payload: {
+          usuario_id: activeUserId ?? 1,
           categoria: categoria.trim() || 'Outros',
           descricao: descricao.trim() || 'Sem descricao',
           valor: v,
@@ -164,4 +172,3 @@ const styles = StyleSheet.create({
   buttonText: { color: '#fff', fontWeight: '700' },
   small: { color: '#666' },
 });
-

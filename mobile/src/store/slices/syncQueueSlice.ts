@@ -19,6 +19,7 @@ type SyncEntity =
 
 export type PendingSyncItem = {
   id: string;
+  usuario_id: number;
   method: SyncMethod;
   endpoint: string;
   entity: SyncEntity;
@@ -59,11 +60,16 @@ export const processPendingSync = createAsyncThunk<
 
   for (const item of pendingSync) {
     try {
+      const knownUsers = session.knownUsers ?? {};
+      const user = knownUsers[String(item.usuario_id)];
       await apiClient.request({
         url: item.endpoint,
         method: item.method,
-        data: item.payload,
-        headers: session.token ? { Authorization: `Bearer ${session.token}` } : undefined,
+        data: {
+          ...(item.payload ?? {}),
+          usuario_id: item.usuario_id,
+        },
+        headers: user?.token ? { Authorization: `Bearer ${user.token}` } : undefined,
       });
 
       dispatch(removeSyncItem(item.id));

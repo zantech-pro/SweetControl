@@ -12,6 +12,7 @@ export type ItemVenda = {
 
 export type Venda = {
   id: number;
+  usuario_id: number;
   cliente_id: number | null;
   cliente_nome: string | null;
   itens: ItemVenda[];
@@ -26,6 +27,7 @@ export type Venda = {
 
 export type MovimentacaoEstoque = {
   id: number;
+  usuario_id: number;
   produto_id: number;
   produto_nome: string;
   tipo_movimento: 'entrada' | 'saida' | 'ajuste';
@@ -38,6 +40,7 @@ export type MovimentacaoEstoque = {
 
 export type GastoExtra = {
   id: number;
+  usuario_id: number;
   categoria: string;
   descricao: string;
   valor: number;
@@ -47,6 +50,7 @@ export type GastoExtra = {
 
 export type MarketingTemplate = {
   id: number;
+  usuario_id: number;
   titulo: string;
   conteudo: string;
   tipo: 'promocao' | 'whatsapp' | 'oferta';
@@ -54,6 +58,7 @@ export type MarketingTemplate = {
 
 export type CrmRegistro = {
   id: number;
+  usuario_id: number;
   cliente_id: number;
   cliente_nome: string;
   observacao: string;
@@ -62,6 +67,7 @@ export type CrmRegistro = {
 
 export type PedidoOnline = {
   id: number;
+  usuario_id: number;
   cliente_nome: string;
   itens_resumo: string;
   valor_total: number;
@@ -85,12 +91,14 @@ const initialState: BusinessState = {
   marketingTemplates: [
     {
       id: 1,
+      usuario_id: 1,
       titulo: 'Promocao da Semana',
       conteudo: 'Temos bolos fresquinhos com desconto especial. Faca seu pedido agora!',
       tipo: 'promocao',
     },
     {
       id: 2,
+      usuario_id: 1,
       titulo: 'Tabela de Precos',
       conteudo: 'Bolo de pote: R$ 15 | Brigadeiro cento: R$ 80 | Bolo caseiro: R$ 45',
       tipo: 'whatsapp',
@@ -118,18 +126,32 @@ export const businessSlice = createSlice({
     },
     updateMarketingTemplateLocal: (
       state,
-      action: PayloadAction<{ id: number; titulo: string; conteudo: string; tipo: MarketingTemplate['tipo'] }>
+      action: PayloadAction<{
+        id: number;
+        usuario_id: number;
+        titulo: string;
+        conteudo: string;
+        tipo: MarketingTemplate['tipo'];
+      }>
     ) => {
-      const template = state.marketingTemplates.find((item) => item.id === action.payload.id);
+      const template = state.marketingTemplates.find(
+        (item) =>
+          item.id === action.payload.id &&
+          item.usuario_id === action.payload.usuario_id
+      );
       if (!template) return;
 
       template.titulo = action.payload.titulo;
       template.conteudo = action.payload.conteudo;
       template.tipo = action.payload.tipo;
     },
-    removeMarketingTemplateLocal: (state, action: PayloadAction<number>) => {
+    removeMarketingTemplateLocal: (
+      state,
+      action: PayloadAction<{ id: number; usuario_id: number }>
+    ) => {
       state.marketingTemplates = state.marketingTemplates.filter(
-        (item) => item.id !== action.payload
+        (item) =>
+          !(item.id === action.payload.id && item.usuario_id === action.payload.usuario_id)
       );
     },
     addCrmRegistroLocal: (state, action: PayloadAction<CrmRegistro>) => {
@@ -140,9 +162,12 @@ export const businessSlice = createSlice({
     },
     updatePedidoOnlineStatusLocal: (
       state,
-      action: PayloadAction<{ id: number; status: PedidoOnline['status'] }>
+      action: PayloadAction<{ id: number; usuario_id: number; status: PedidoOnline['status'] }>
     ) => {
-      const pedido = state.pedidosOnline.find((item) => item.id === action.payload.id);
+      const pedido = state.pedidosOnline.find(
+        (item) =>
+          item.id === action.payload.id && item.usuario_id === action.payload.usuario_id
+      );
       if (!pedido) return;
       pedido.status = action.payload.status;
     },

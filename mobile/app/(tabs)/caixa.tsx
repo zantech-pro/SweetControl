@@ -18,9 +18,16 @@ type CartItem = { produto_id: number; nome: string; preco: number; quantidade: n
 export default function Caixa() {
   const dispatch = useDispatch<AppDispatch>();
   const themeName = useSelector((state: RootState) => state.theme.currentTheme);
-  const produtos = useSelector((state: RootState) => state.referenceData.produtos);
-  const clientes = useSelector((state: RootState) => state.referenceData.clientes);
-  const pedidosOnline = useSelector((state: RootState) => state.business.pedidosOnline);
+  const activeUserId = useSelector((state: RootState) => state.session.activeUserId);
+  const produtos = useSelector((state: RootState) =>
+    state.referenceData.produtos.filter((item) => item.usuario_id === activeUserId)
+  );
+  const clientes = useSelector((state: RootState) =>
+    state.referenceData.clientes.filter((item) => item.usuario_id === activeUserId)
+  );
+  const pedidosOnline = useSelector((state: RootState) =>
+    state.business.pedidosOnline.filter((item) => item.usuario_id === activeUserId)
+  );
   const activeTheme = themes[themeName as ThemeType] || themes.verde;
 
   const [clienteId, setClienteId] = useState<number | null>(null);
@@ -86,6 +93,7 @@ export default function Caixa() {
     dispatch(
       addVendaLocal({
         id: vendaId,
+        usuario_id: activeUserId ?? 1,
         cliente_id: clienteId,
         cliente_nome: cliente?.nome ?? null,
         itens,
@@ -104,7 +112,9 @@ export default function Caixa() {
         entity: 'vendas',
         endpoint: '/vendas/create.php',
         method: 'POST',
+        usuario_id: activeUserId ?? 1,
         payload: {
+          usuario_id: activeUserId ?? 1,
           cliente_id: clienteId,
           total_bruto: totalBruto,
           desconto: descontoValor,
@@ -116,10 +126,17 @@ export default function Caixa() {
     );
 
     cart.forEach((item) => {
-      dispatch(adjustProdutoEstoqueLocal({ id: item.produto_id, delta: -item.quantidade }));
+      dispatch(
+        adjustProdutoEstoqueLocal({
+          id: item.produto_id,
+          usuario_id: activeUserId ?? 1,
+          delta: -item.quantidade,
+        })
+      );
       dispatch(
         addMovimentacaoEstoqueLocal({
           id: -(Date.now() + item.produto_id),
+          usuario_id: activeUserId ?? 1,
           produto_id: item.produto_id,
           produto_nome: item.nome,
           tipo_movimento: 'saida',
@@ -136,8 +153,10 @@ export default function Caixa() {
           entity: 'itens_venda',
           endpoint: '/vendas/itens/create.php',
           method: 'POST',
+          usuario_id: activeUserId ?? 1,
           payload: {
             venda_id: vendaId,
+            usuario_id: activeUserId ?? 1,
             produto_id: item.produto_id,
             quantidade: item.quantidade,
             preco_unitario: item.preco,
@@ -150,8 +169,10 @@ export default function Caixa() {
           entity: 'movimentacoes_estoque',
           endpoint: '/estoque/movimentacoes/create.php',
           method: 'POST',
+          usuario_id: activeUserId ?? 1,
           payload: {
             produto_id: item.produto_id,
+            usuario_id: activeUserId ?? 1,
             tipo_movimento: 'saida',
             quantidade: item.quantidade,
             motivo: 'Venda',
@@ -187,7 +208,12 @@ export default function Caixa() {
         entity: 'recibos_digitais',
         endpoint: '/vendas/recibos/create.php',
         method: 'POST',
-        payload: { conteudo: ultimoRecibo, gerado_em: new Date().toISOString() },
+        usuario_id: activeUserId ?? 1,
+        payload: {
+          usuario_id: activeUserId ?? 1,
+          conteudo: ultimoRecibo,
+          gerado_em: new Date().toISOString(),
+        },
       })
     );
   }
@@ -197,6 +223,7 @@ export default function Caixa() {
     dispatch(
       addPedidoOnlineLocal({
         id,
+        usuario_id: activeUserId ?? 1,
         cliente_nome: 'Pedido WhatsApp',
         itens_resumo: 'Bolo de pote (2), Brigadeiro (20)',
         valor_total: 70,
@@ -209,7 +236,9 @@ export default function Caixa() {
         entity: 'pedidos_online',
         endpoint: '/pedidos/create.php',
         method: 'POST',
+        usuario_id: activeUserId ?? 1,
         payload: {
+          usuario_id: activeUserId ?? 1,
           cliente_nome: 'Pedido WhatsApp',
           itens_resumo: 'Bolo de pote (2), Brigadeiro (20)',
           valor_total: 70,
@@ -325,7 +354,17 @@ export default function Caixa() {
               <Text style={styles.smallText}>R$ {item.valor_total.toFixed(2)} | {item.status}</Text>
             </View>
             <View>
-              <TouchableOpacity onPress={() => dispatch(updatePedidoOnlineStatusLocal({ id: item.id, status: 'aceito' }))}>
+              <TouchableOpacity
+                onPress={() =>
+                  dispatch(
+                    updatePedidoOnlineStatusLocal({
+                      id: item.id,
+                      usuario_id: activeUserId ?? 1,
+                      status: 'aceito',
+                    })
+                  )
+                }
+              >
                 <Text style={styles.actionText}>OK</Text>
               </TouchableOpacity>
             </View>

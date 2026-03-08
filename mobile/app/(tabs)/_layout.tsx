@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tabs } from 'expo-router';
+import { Redirect, Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../src/store';
@@ -7,7 +7,12 @@ import { ThemeType, themes } from '../../src/theme/themes';
 
 export default function TabsLayout() {
   const themeName = useSelector((state: RootState) => state.theme.currentTheme);
+  const isAuthenticated = useSelector((state: RootState) => state.session.isAuthenticated);
   const activeTheme = themes[themeName as ThemeType] || themes.verde;
+
+  if (!isAuthenticated) {
+    return <Redirect href={'/login' as never} />;
+  }
 
   return (
     <Tabs

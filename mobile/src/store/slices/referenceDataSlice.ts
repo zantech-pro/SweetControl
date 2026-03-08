@@ -2,12 +2,14 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export type Categoria = {
   id: number;
+  usuario_id: number;
   nome: string;
   descricao?: string | null;
 };
 
 export type Produto = {
   id: number;
+  usuario_id: number;
   nome: string;
   categoria_id?: number | null;
   preco_venda?: number | null;
@@ -19,6 +21,7 @@ export type Produto = {
 
 export type Cliente = {
   id: number;
+  usuario_id: number;
   nome: string;
   telefone?: string | null;
   email?: string | null;
@@ -60,17 +63,35 @@ export const referenceDataSlice = createSlice({
     },
     updateCategoriaLocal: (
       state,
-      action: PayloadAction<{ id: number; nome: string; descricao?: string | null }>
+      action: PayloadAction<{
+        id: number;
+        usuario_id: number;
+        nome: string;
+        descricao?: string | null;
+      }>
     ) => {
-      const categoria = state.categorias.find((item) => item.id === action.payload.id);
+      const categoria = state.categorias.find(
+        (item) =>
+          item.id === action.payload.id &&
+          item.usuario_id === action.payload.usuario_id
+      );
       if (!categoria) return;
 
       categoria.nome = action.payload.nome;
       categoria.descricao = action.payload.descricao ?? null;
       state.lastUpdatedAt = new Date().toISOString();
     },
-    removeCategoriaLocal: (state, action: PayloadAction<number>) => {
-      state.categorias = state.categorias.filter((item) => item.id !== action.payload);
+    removeCategoriaLocal: (
+      state,
+      action: PayloadAction<{ id: number; usuario_id: number }>
+    ) => {
+      state.categorias = state.categorias.filter(
+        (item) =>
+          !(
+            item.id === action.payload.id &&
+            item.usuario_id === action.payload.usuario_id
+          )
+      );
       state.lastUpdatedAt = new Date().toISOString();
     },
     addProdutoLocal: (state, action: PayloadAction<Produto>) => {
@@ -81,6 +102,7 @@ export const referenceDataSlice = createSlice({
       state,
       action: PayloadAction<{
         id: number;
+        usuario_id: number;
         nome: string;
         categoria_id?: number | null;
         preco_venda?: number | null;
@@ -89,7 +111,11 @@ export const referenceDataSlice = createSlice({
         data_validade?: string | null;
       }>
     ) => {
-      const produto = state.produtos.find((item) => item.id === action.payload.id);
+      const produto = state.produtos.find(
+        (item) =>
+          item.id === action.payload.id &&
+          item.usuario_id === action.payload.usuario_id
+      );
       if (!produto) return;
 
       produto.nome = action.payload.nome;
@@ -100,15 +126,28 @@ export const referenceDataSlice = createSlice({
       produto.data_validade = action.payload.data_validade ?? null;
       state.lastUpdatedAt = new Date().toISOString();
     },
-    removeProdutoLocal: (state, action: PayloadAction<number>) => {
-      state.produtos = state.produtos.filter((item) => item.id !== action.payload);
+    removeProdutoLocal: (
+      state,
+      action: PayloadAction<{ id: number; usuario_id: number }>
+    ) => {
+      state.produtos = state.produtos.filter(
+        (item) =>
+          !(
+            item.id === action.payload.id &&
+            item.usuario_id === action.payload.usuario_id
+          )
+      );
       state.lastUpdatedAt = new Date().toISOString();
     },
     adjustProdutoEstoqueLocal: (
       state,
-      action: PayloadAction<{ id: number; delta: number }>
+      action: PayloadAction<{ id: number; usuario_id: number; delta: number }>
     ) => {
-      const produto = state.produtos.find((item) => item.id === action.payload.id);
+      const produto = state.produtos.find(
+        (item) =>
+          item.id === action.payload.id &&
+          item.usuario_id === action.payload.usuario_id
+      );
       if (!produto) return;
 
       const atual = produto.quantidade_estoque ?? 0;
@@ -123,12 +162,17 @@ export const referenceDataSlice = createSlice({
       state,
       action: PayloadAction<{
         id: number;
+        usuario_id: number;
         nome: string;
         telefone?: string | null;
         email?: string | null;
       }>
     ) => {
-      const cliente = state.clientes.find((item) => item.id === action.payload.id);
+      const cliente = state.clientes.find(
+        (item) =>
+          item.id === action.payload.id &&
+          item.usuario_id === action.payload.usuario_id
+      );
       if (!cliente) return;
 
       cliente.nome = action.payload.nome;
@@ -136,8 +180,17 @@ export const referenceDataSlice = createSlice({
       cliente.email = action.payload.email ?? null;
       state.lastUpdatedAt = new Date().toISOString();
     },
-    removeClienteLocal: (state, action: PayloadAction<number>) => {
-      state.clientes = state.clientes.filter((item) => item.id !== action.payload);
+    removeClienteLocal: (
+      state,
+      action: PayloadAction<{ id: number; usuario_id: number }>
+    ) => {
+      state.clientes = state.clientes.filter(
+        (item) =>
+          !(
+            item.id === action.payload.id &&
+            item.usuario_id === action.payload.usuario_id
+          )
+      );
       state.lastUpdatedAt = new Date().toISOString();
     },
     clearReferenceData: () => initialState,

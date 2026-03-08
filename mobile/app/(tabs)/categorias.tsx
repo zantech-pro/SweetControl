@@ -21,7 +21,10 @@ import { enqueueSyncItem } from '../../src/store/slices/syncQueueSlice';
 export default function Categorias() {
   const dispatch = useDispatch<AppDispatch>();
   const themeName = useSelector((state: RootState) => state.theme.currentTheme);
-  const categorias = useSelector((state: RootState) => state.referenceData.categorias);
+  const activeUserId = useSelector((state: RootState) => state.session.activeUserId);
+  const categorias = useSelector((state: RootState) =>
+    state.referenceData.categorias.filter((item) => item.usuario_id === activeUserId)
+  );
   const activeTheme = themes[themeName as ThemeType] || themes.verde;
 
   const [nome, setNome] = useState('');
@@ -50,6 +53,7 @@ export default function Categorias() {
       dispatch(
         updateCategoriaLocal({
           id: editandoId,
+          usuario_id: activeUserId ?? 1,
           nome: nomeNormalizado,
           descricao: descricao.trim() || null,
         })
@@ -60,8 +64,10 @@ export default function Categorias() {
           entity: 'categorias_produtos',
           endpoint: '/categorias/update.php',
           method: 'PUT',
+          usuario_id: activeUserId ?? 1,
           payload: {
             id: editandoId,
+            usuario_id: activeUserId ?? 1,
             nome: nomeNormalizado,
             descricao: descricao.trim() || null,
           },
@@ -76,6 +82,7 @@ export default function Categorias() {
     dispatch(
       addCategoriaLocal({
         id: tempId,
+        usuario_id: activeUserId ?? 1,
         nome: nomeNormalizado,
         descricao: descricao.trim() || null,
       })
@@ -86,7 +93,9 @@ export default function Categorias() {
         entity: 'categorias_produtos',
         endpoint: '/categorias/create.php',
         method: 'POST',
+        usuario_id: activeUserId ?? 1,
         payload: {
+          usuario_id: activeUserId ?? 1,
           nome: nomeNormalizado,
           descricao: descricao.trim() || null,
         },
@@ -103,13 +112,14 @@ export default function Categorias() {
   }
 
   function excluirCategoria(id: number) {
-    dispatch(removeCategoriaLocal(id));
+    dispatch(removeCategoriaLocal({ id, usuario_id: activeUserId ?? 1 }));
     dispatch(
       enqueueSyncItem({
         entity: 'categorias_produtos',
         endpoint: '/categorias/delete.php',
         method: 'DELETE',
-        payload: { id },
+        usuario_id: activeUserId ?? 1,
+        payload: { id, usuario_id: activeUserId ?? 1 },
       })
     );
   }
@@ -210,4 +220,3 @@ const styles = StyleSheet.create({
   editText: { color: '#1e88e5', fontWeight: '600' },
   deleteText: { color: '#e53935', fontWeight: '600' },
 });
-

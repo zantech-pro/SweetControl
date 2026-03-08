@@ -11,6 +11,13 @@
 
 ## 3) Endpoints implementados
 
+### Auth
+- `POST /auth/login.php`
+- `POST /auth/register.php`
+- `POST /auth/change_password.php`
+- `POST /auth/request_reset.php`
+- `POST /auth/reset_password.php`
+
 ### Categorias
 - `POST /categorias/create.php`
 - `PUT /categorias/update.php`
@@ -54,4 +61,3 @@
 - Todos os endpoints aceitam JSON (`Content-Type: application/json`).
 - Enquanto autenticacao nao estiver ativa, o backend usa `usuario_id` do payload; se nao vier, usa `default_user_id` do `config.php`.
 - A estrutura foi preparada para o fluxo Offline First do app mobile (fila de sincronizacao).
-

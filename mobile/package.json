@@ -4,6 +4,8 @@
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
+    "start:clean": "expo start -c",
+    "start:win-safe": "set NODE_OPTIONS=--max-old-space-size=4096 && expo start -c",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",

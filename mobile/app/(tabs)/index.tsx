@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { themes, ThemeType } from '../../src/theme/themes';
@@ -6,11 +6,18 @@ import { setTheme } from '../../src/store/slices/themeSlice';
 import { AppDispatch, RootState } from '../../src/store';
 import { enqueueSyncItem } from '../../src/store/slices/syncQueueSlice';
 import { runSyncCycle } from '../../src/store/syncService';
+import { logout, switchActiveUser } from '../../src/store/slices/sessionSlice';
+import { router } from 'expo-router';
 
 export default function Home() {
   const dispatch = useDispatch<AppDispatch>();
   const themeName = useSelector((state: RootState) => state.theme.currentTheme);
   const syncQueue = useSelector((state: RootState) => state.syncQueue);
+  const activeUserId = useSelector((state: RootState) => state.session.activeUserId);
+  const knownUsersMap = useSelector((state: RootState) =>
+    state.session.knownUsers ?? {}
+  );
+  const knownUsers = useMemo(() => Object.values(knownUsersMap), [knownUsersMap]);
   const activeTheme = themes[themeName as ThemeType] || themes.verde;
 
   function handleQueueExample() {
@@ -19,8 +26,8 @@ export default function Home() {
         entity: 'vendas',
         endpoint: '/vendas/create.php',
         method: 'POST',
+        usuario_id: activeUserId ?? 1,
         payload: {
-          usuario_id: 1,
           total_bruto: 35.5,
           desconto: 0,
           total_liquido: 35.5,
@@ -60,7 +67,12 @@ export default function Home() {
 
         <View style={[styles.card, { backgroundColor: activeTheme.card }]}>
           <Text style={styles.cardTitle}>Offline First (Etapa 1)</Text>
-          <Text style={styles.syncInfo}>Pendentes: {syncQueue.pendingSync.length}</Text>
+          <Text style={styles.syncInfo}>
+            Usuario ativo: {activeUserId ?? '-'}
+          </Text>
+          <Text style={styles.syncInfo}>
+            Pendentes: {syncQueue.pendingSync.filter((item) => item.usuario_id === activeUserId).length}
+          </Text>
           <Text style={styles.syncInfo}>
             Ultimo sync: {syncQueue.lastSyncAt ? new Date(syncQueue.lastSyncAt).toLocaleString() : '-'}
           </Text>
@@ -80,6 +92,31 @@ export default function Home() {
             onPress={() => runSyncCycle(dispatch)}
           >
             <Text style={styles.btnText}>Sincronizar Agora</Text>
+          </TouchableOpacity>
+
+          {knownUsers.map((user) => (
+            <TouchableOpacity
+              key={user.id}
+              style={[styles.actionBtn, { backgroundColor: '#546e7a' }]}
+              onPress={() => dispatch(switchActiveUser(user.id))}
+            >
+              <Text style={styles.btnText}>Trocar para {user.nome}</Text>
+            </TouchableOpacity>
+          ))}
+          <TouchableOpacity
+            style={[styles.actionBtn, { backgroundColor: '#6d4c41' }]}
+            onPress={() => router.push('/change-password' as never)}
+          >
+            <Text style={styles.btnText}>Trocar Senha</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionBtn, { backgroundColor: '#8d6e63' }]}
+            onPress={() => {
+              dispatch(logout());
+              router.replace('/login' as never);
+            }}
+          >
+            <Text style={styles.btnText}>Sair</Text>
           </TouchableOpacity>
         </View>
       </View>

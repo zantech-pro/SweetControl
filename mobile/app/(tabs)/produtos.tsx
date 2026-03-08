@@ -21,8 +21,13 @@ import { enqueueSyncItem } from '../../src/store/slices/syncQueueSlice';
 export default function Produtos() {
   const dispatch = useDispatch<AppDispatch>();
   const themeName = useSelector((state: RootState) => state.theme.currentTheme);
-  const produtos = useSelector((state: RootState) => state.referenceData.produtos);
-  const categorias = useSelector((state: RootState) => state.referenceData.categorias);
+  const activeUserId = useSelector((state: RootState) => state.session.activeUserId);
+  const produtos = useSelector((state: RootState) =>
+    state.referenceData.produtos.filter((item) => item.usuario_id === activeUserId)
+  );
+  const categorias = useSelector((state: RootState) =>
+    state.referenceData.categorias.filter((item) => item.usuario_id === activeUserId)
+  );
   const activeTheme = themes[themeName as ThemeType] || themes.verde;
 
   const [nome, setNome] = useState('');
@@ -76,6 +81,7 @@ export default function Produtos() {
       dispatch(
         updateProdutoLocal({
           id: editandoId,
+          usuario_id: activeUserId ?? 1,
           nome: nomeNormalizado,
           categoria_id: categoriaId,
           preco_venda: preco,
@@ -90,8 +96,10 @@ export default function Produtos() {
           entity: 'produtos',
           endpoint: '/produtos/update.php',
           method: 'PUT',
+          usuario_id: activeUserId ?? 1,
           payload: {
             id: editandoId,
+            usuario_id: activeUserId ?? 1,
             nome: nomeNormalizado,
             categoria_id: categoriaId,
             preco_venda: preco,
@@ -110,6 +118,7 @@ export default function Produtos() {
     dispatch(
       addProdutoLocal({
         id: tempId,
+        usuario_id: activeUserId ?? 1,
         nome: nomeNormalizado,
         categoria_id: categoriaId,
         preco_venda: preco,
@@ -125,7 +134,9 @@ export default function Produtos() {
         entity: 'produtos',
         endpoint: '/produtos/create.php',
         method: 'POST',
+        usuario_id: activeUserId ?? 1,
         payload: {
+          usuario_id: activeUserId ?? 1,
           nome: nomeNormalizado,
           categoria_id: categoriaId,
           preco_venda: preco,
@@ -159,13 +170,14 @@ export default function Produtos() {
   }
 
   function excluirProduto(id: number) {
-    dispatch(removeProdutoLocal(id));
+    dispatch(removeProdutoLocal({ id, usuario_id: activeUserId ?? 1 }));
     dispatch(
       enqueueSyncItem({
         entity: 'produtos',
         endpoint: '/produtos/delete.php',
         method: 'DELETE',
-        payload: { id },
+        usuario_id: activeUserId ?? 1,
+        payload: { id, usuario_id: activeUserId ?? 1 },
       })
     );
   }

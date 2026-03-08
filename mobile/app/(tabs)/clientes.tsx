@@ -21,7 +21,10 @@ import { enqueueSyncItem } from '../../src/store/slices/syncQueueSlice';
 export default function Clientes() {
   const dispatch = useDispatch<AppDispatch>();
   const themeName = useSelector((state: RootState) => state.theme.currentTheme);
-  const clientes = useSelector((state: RootState) => state.referenceData.clientes);
+  const activeUserId = useSelector((state: RootState) => state.session.activeUserId);
+  const clientes = useSelector((state: RootState) =>
+    state.referenceData.clientes.filter((item) => item.usuario_id === activeUserId)
+  );
   const activeTheme = themes[themeName as ThemeType] || themes.verde;
 
   const [nome, setNome] = useState('');
@@ -64,6 +67,7 @@ export default function Clientes() {
       dispatch(
         updateClienteLocal({
           id: editandoId,
+          usuario_id: activeUserId ?? 1,
           nome: nomeNormalizado,
           telefone: telefoneNormalizado,
           email: emailNormalizado,
@@ -75,8 +79,10 @@ export default function Clientes() {
           entity: 'clientes',
           endpoint: '/clientes/update.php',
           method: 'PUT',
+          usuario_id: activeUserId ?? 1,
           payload: {
             id: editandoId,
+            usuario_id: activeUserId ?? 1,
             nome: nomeNormalizado,
             telefone: telefoneNormalizado,
             email: emailNormalizado,
@@ -92,6 +98,7 @@ export default function Clientes() {
     dispatch(
       addClienteLocal({
         id: tempId,
+        usuario_id: activeUserId ?? 1,
         nome: nomeNormalizado,
         telefone: telefoneNormalizado,
         email: emailNormalizado,
@@ -103,7 +110,9 @@ export default function Clientes() {
         entity: 'clientes',
         endpoint: '/clientes/create.php',
         method: 'POST',
+        usuario_id: activeUserId ?? 1,
         payload: {
+          usuario_id: activeUserId ?? 1,
           nome: nomeNormalizado,
           telefone: telefoneNormalizado,
           email: emailNormalizado,
@@ -127,13 +136,14 @@ export default function Clientes() {
   }
 
   function excluirCliente(id: number) {
-    dispatch(removeClienteLocal(id));
+    dispatch(removeClienteLocal({ id, usuario_id: activeUserId ?? 1 }));
     dispatch(
       enqueueSyncItem({
         entity: 'clientes',
         endpoint: '/clientes/delete.php',
         method: 'DELETE',
-        payload: { id },
+        usuario_id: activeUserId ?? 1,
+        payload: { id, usuario_id: activeUserId ?? 1 },
       })
     );
   }
@@ -241,4 +251,3 @@ const styles = StyleSheet.create({
   editText: { color: '#1e88e5', fontWeight: '600' },
   deleteText: { color: '#e53935', fontWeight: '600' },
 });
-

@@ -14,9 +14,16 @@ import { enqueueSyncItem } from '../../src/store/slices/syncQueueSlice';
 export default function Marketing() {
   const dispatch = useDispatch<AppDispatch>();
   const themeName = useSelector((state: RootState) => state.theme.currentTheme);
-  const templates = useSelector((state: RootState) => state.business.marketingTemplates);
-  const clientes = useSelector((state: RootState) => state.referenceData.clientes);
-  const crmRegistros = useSelector((state: RootState) => state.business.crmRegistros);
+  const activeUserId = useSelector((state: RootState) => state.session.activeUserId);
+  const templates = useSelector((state: RootState) =>
+    state.business.marketingTemplates.filter((item) => item.usuario_id === activeUserId)
+  );
+  const clientes = useSelector((state: RootState) =>
+    state.referenceData.clientes.filter((item) => item.usuario_id === activeUserId)
+  );
+  const crmRegistros = useSelector((state: RootState) =>
+    state.business.crmRegistros.filter((item) => item.usuario_id === activeUserId)
+  );
   const activeTheme = themes[themeName as ThemeType] || themes.verde;
 
   const [titulo, setTitulo] = useState('');
@@ -42,12 +49,21 @@ export default function Marketing() {
     if (!titulo.trim() || !conteudo.trim()) return;
 
     if (editandoId) {
-      dispatch(updateMarketingTemplateLocal({ id: editandoId, titulo: titulo.trim(), conteudo: conteudo.trim(), tipo }));
+      dispatch(
+        updateMarketingTemplateLocal({
+          id: editandoId,
+          usuario_id: activeUserId ?? 1,
+          titulo: titulo.trim(),
+          conteudo: conteudo.trim(),
+          tipo,
+        })
+      );
       dispatch(
         enqueueSyncItem({
           entity: 'marketing_templates',
           endpoint: '/marketing/templates/update.php',
           method: 'PUT',
+          usuario_id: activeUserId ?? 1,
           payload: { id: editandoId, titulo: titulo.trim(), conteudo: conteudo.trim(), tipo },
         })
       );
@@ -56,26 +72,41 @@ export default function Marketing() {
     }
 
     const id = -Date.now();
-    dispatch(addMarketingTemplateLocal({ id, titulo: titulo.trim(), conteudo: conteudo.trim(), tipo }));
+    dispatch(
+      addMarketingTemplateLocal({
+        id,
+        usuario_id: activeUserId ?? 1,
+        titulo: titulo.trim(),
+        conteudo: conteudo.trim(),
+        tipo,
+      })
+    );
     dispatch(
       enqueueSyncItem({
         entity: 'marketing_templates',
         endpoint: '/marketing/templates/create.php',
         method: 'POST',
-        payload: { titulo: titulo.trim(), conteudo: conteudo.trim(), tipo },
+        usuario_id: activeUserId ?? 1,
+        payload: {
+          usuario_id: activeUserId ?? 1,
+          titulo: titulo.trim(),
+          conteudo: conteudo.trim(),
+          tipo,
+        },
       })
     );
     resetTemplateForm();
   }
 
   function excluirTemplate(id: number) {
-    dispatch(removeMarketingTemplateLocal(id));
+    dispatch(removeMarketingTemplateLocal({ id, usuario_id: activeUserId ?? 1 }));
     dispatch(
       enqueueSyncItem({
         entity: 'marketing_templates',
         endpoint: '/marketing/templates/delete.php',
         method: 'DELETE',
-        payload: { id },
+        usuario_id: activeUserId ?? 1,
+        payload: { id, usuario_id: activeUserId ?? 1 },
       })
     );
   }
@@ -88,6 +119,7 @@ export default function Marketing() {
     dispatch(
       addCrmRegistroLocal({
         id: -Date.now(),
+        usuario_id: activeUserId ?? 1,
         cliente_id: crmClienteId,
         cliente_nome: cliente.nome,
         observacao: crmObs.trim(),
@@ -99,7 +131,12 @@ export default function Marketing() {
         entity: 'crm_registros',
         endpoint: '/crm/registros/create.php',
         method: 'POST',
-        payload: { cliente_id: crmClienteId, observacao: crmObs.trim() },
+        usuario_id: activeUserId ?? 1,
+        payload: {
+          usuario_id: activeUserId ?? 1,
+          cliente_id: crmClienteId,
+          observacao: crmObs.trim(),
+        },
       })
     );
     setCrmObs('');
