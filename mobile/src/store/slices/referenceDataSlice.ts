@@ -52,11 +52,36 @@ export const referenceDataSlice = createSlice({
       state.clientes = action.payload;
       state.lastUpdatedAt = new Date().toISOString();
     },
+    addCategoriaLocal: (state, action: PayloadAction<Categoria>) => {
+      state.categorias.unshift(action.payload);
+      state.lastUpdatedAt = new Date().toISOString();
+    },
+    updateCategoriaLocal: (
+      state,
+      action: PayloadAction<{ id: number; nome: string; descricao?: string | null }>
+    ) => {
+      const categoria = state.categorias.find((item) => item.id === action.payload.id);
+      if (!categoria) return;
+
+      categoria.nome = action.payload.nome;
+      categoria.descricao = action.payload.descricao ?? null;
+      state.lastUpdatedAt = new Date().toISOString();
+    },
+    removeCategoriaLocal: (state, action: PayloadAction<number>) => {
+      state.categorias = state.categorias.filter((item) => item.id !== action.payload);
+      state.lastUpdatedAt = new Date().toISOString();
+    },
     clearReferenceData: () => initialState,
   },
 });
 
-export const { setCategorias, setProdutos, setClientes, clearReferenceData } =
-  referenceDataSlice.actions;
+export const {
+  setCategorias,
+  setProdutos,
+  setClientes,
+  addCategoriaLocal,
+  updateCategoriaLocal,
+  removeCategoriaLocal,
+  clearReferenceData,
+} = referenceDataSlice.actions;
 export default referenceDataSlice.reducer;
-

@@ -34,14 +34,15 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="estoque"
+        name="categorias"
         options={{
-          title: 'Estoque',
+          title: 'Categorias',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="cube-outline" color={color} size={size} />
           ),
         }}
       />
+      <Tabs.Screen name="estoque" options={{ href: null }} />
     </Tabs>
   );
 }
