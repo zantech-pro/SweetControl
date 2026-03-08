@@ -40,3 +40,6 @@ Thumbs.db
 # --- Logs e Temporários ---
 *.log
 temp/
+# --- Evidencias locais ---
+docs/Evidencia_fomulario_entrevista.pdf
+docs/Evidencia_fomulario_entrevista.png
