@@ -42,6 +42,12 @@ export const sessionSlice = createSlice({
     ) => {
       const user = action.payload.user;
       const nowIso = new Date().toISOString();
+      if (!state.knownUsers) {
+        state.knownUsers = {};
+      }
+      if (!state.offlineCredentialsByEmail) {
+        state.offlineCredentialsByEmail = {};
+      }
       state.activeUserId = user.id;
       state.isAuthenticated = true;
       state.knownUsers[String(user.id)] = {

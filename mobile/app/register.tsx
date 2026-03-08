@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { router } from 'expo-router';
 import { useDispatch } from 'react-redux';
+import { AxiosError } from 'axios';
 import { apiClient } from '../src/api/client';
 import { AppDispatch } from '../src/store';
 import { makeOfflinePasswordHash } from '../src/store/passwordHash';
@@ -13,6 +14,7 @@ type RegisterResponse = {
   token?: string;
   user?: { id: number; nome: string; email: string };
   error?: string;
+  details?: string;
 };
 
 export default function RegisterScreen() {
@@ -56,7 +58,13 @@ export default function RegisterScreen() {
       Alert.alert('Conta criada', 'Cadastro realizado com sucesso.');
       router.replace('/(tabs)' as never);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Erro ao cadastrar';
+      let message = error instanceof Error ? error.message : 'Erro ao cadastrar';
+      if (error instanceof AxiosError) {
+        const data = error.response?.data as RegisterResponse | undefined;
+        if (data?.error) {
+          message = data.details ? `${data.error}\n${data.details}` : data.error;
+        }
+      }
       Alert.alert('Erro', message);
     } finally {
       setLoading(false);
@@ -118,4 +126,3 @@ const styles = StyleSheet.create({
   buttonText: { color: '#fff', fontWeight: '700' },
   link: { color: '#1e88e5', fontWeight: '600', marginTop: 12, textAlign: 'center' },
 });
-

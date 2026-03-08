@@ -49,7 +49,9 @@ export const processPendingSync = createAsyncThunk<
   { successCount: number; failedCount: number },
   void,
   { state: RootState }
->('syncQueue/processPendingSync', async (_, { getState, dispatch }) => {
+>(
+  'syncQueue/processPendingSync',
+  async (_, { getState, dispatch }) => {
   const {
     syncQueue: { pendingSync },
     session,
@@ -82,7 +84,17 @@ export const processPendingSync = createAsyncThunk<
   }
 
   return { successCount, failedCount };
-});
+  },
+  {
+    condition: (_, { getState }) => {
+      const state = getState() as RootState;
+      if (!state.session.isAuthenticated) return false;
+      if (state.syncQueue.isSyncing) return false;
+      if (state.syncQueue.pendingSync.length === 0) return false;
+      return true;
+    },
+  }
+);
 
 export const syncQueueSlice = createSlice({
   name: 'syncQueue',

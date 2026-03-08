@@ -77,13 +77,30 @@ function to_nullable_float($value): ?float
 
 function app_config(): array
 {
-    $path = dirname(__DIR__) . '/config.php';
-    if (!file_exists($path)) {
-        json_response(500, ['success' => false, 'error' => 'Arquivo backend/config.php nao encontrado']);
+    $candidates = [
+        dirname(__DIR__) . '/config.php',
+        dirname(dirname(__DIR__)) . '/config.php',
+        dirname(__DIR__, 2) . '/config.php',
+    ];
+
+    $path = null;
+    foreach ($candidates as $candidate) {
+        if (file_exists($candidate)) {
+            $path = $candidate;
+            break;
+        }
     }
+
+    if ($path === null) {
+        json_response(500, [
+            'success' => false,
+            'error' => 'Arquivo config.php nao encontrado (backend/config.php ou raiz).',
+        ]);
+    }
+
     $config = require $path;
     if (!is_array($config)) {
-        json_response(500, ['success' => false, 'error' => 'Configuracao invalida em backend/config.php']);
+        json_response(500, ['success' => false, 'error' => 'Configuracao invalida em config.php']);
     }
     return $config;
 }
