@@ -5,18 +5,20 @@ import themeReducer from './slices/themeSlice';
 import sessionReducer from './slices/sessionSlice';
 import referenceDataReducer from './slices/referenceDataSlice';
 import syncQueueReducer from './slices/syncQueueSlice';
+import businessReducer from './slices/businessSlice';
 
 const rootReducer = combineReducers({
   theme: themeReducer,
   session: sessionReducer,
   referenceData: referenceDataReducer,
   syncQueue: syncQueueReducer,
+  business: businessReducer,
 });
 
 const persistConfig = {
   key: 'sweetcontrol_root',
   storage: AsyncStorage,
-  whitelist: ['theme', 'session', 'referenceData', 'syncQueue'],
+  whitelist: ['theme', 'session', 'referenceData', 'syncQueue', 'business'],
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

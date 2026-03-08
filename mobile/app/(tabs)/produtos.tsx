@@ -28,6 +28,8 @@ export default function Produtos() {
   const [nome, setNome] = useState('');
   const [precoVenda, setPrecoVenda] = useState('');
   const [quantidadeEstoque, setQuantidadeEstoque] = useState('');
+  const [estoqueMinimo, setEstoqueMinimo] = useState('');
+  const [dataValidade, setDataValidade] = useState('');
   const [categoriaId, setCategoriaId] = useState<number | null>(null);
   const [editandoId, setEditandoId] = useState<number | null>(null);
 
@@ -40,6 +42,8 @@ export default function Produtos() {
     setNome('');
     setPrecoVenda('');
     setQuantidadeEstoque('');
+    setEstoqueMinimo('');
+    setDataValidade('');
     setCategoriaId(null);
     setEditandoId(null);
   }
@@ -53,6 +57,7 @@ export default function Produtos() {
 
     const preco = precoVenda.trim() ? Number(precoVenda.replace(',', '.')) : null;
     const estoque = quantidadeEstoque.trim() ? Number(quantidadeEstoque) : null;
+    const minimo = estoqueMinimo.trim() ? Number(estoqueMinimo) : null;
 
     if (preco !== null && Number.isNaN(preco)) {
       Alert.alert('Validacao', 'Preco de venda invalido.');
@@ -60,6 +65,10 @@ export default function Produtos() {
     }
     if (estoque !== null && Number.isNaN(estoque)) {
       Alert.alert('Validacao', 'Quantidade de estoque invalida.');
+      return;
+    }
+    if (minimo !== null && Number.isNaN(minimo)) {
+      Alert.alert('Validacao', 'Estoque minimo invalido.');
       return;
     }
 
@@ -71,6 +80,8 @@ export default function Produtos() {
           categoria_id: categoriaId,
           preco_venda: preco,
           quantidade_estoque: estoque,
+          estoque_minimo: minimo,
+          data_validade: dataValidade.trim() || null,
         })
       );
 
@@ -85,6 +96,8 @@ export default function Produtos() {
             categoria_id: categoriaId,
             preco_venda: preco,
             quantidade_estoque: estoque,
+            estoque_minimo: minimo,
+            data_validade: dataValidade.trim() || null,
           },
         })
       );
@@ -101,6 +114,8 @@ export default function Produtos() {
         categoria_id: categoriaId,
         preco_venda: preco,
         quantidade_estoque: estoque,
+        estoque_minimo: minimo,
+        data_validade: dataValidade.trim() || null,
         status: 'ativo',
       })
     );
@@ -115,6 +130,8 @@ export default function Produtos() {
           categoria_id: categoriaId,
           preco_venda: preco,
           quantidade_estoque: estoque,
+          estoque_minimo: minimo,
+          data_validade: dataValidade.trim() || null,
           status: 'ativo',
         },
       })
@@ -128,13 +145,17 @@ export default function Produtos() {
     produtoNome: string,
     produtoPreco?: number | null,
     produtoQtd?: number | null,
-    produtoCategoriaId?: number | null
+    produtoCategoriaId?: number | null,
+    produtoEstoqueMinimo?: number | null,
+    produtoDataValidade?: string | null
   ) {
     setEditandoId(id);
     setNome(produtoNome);
     setPrecoVenda(produtoPreco?.toString() ?? '');
     setQuantidadeEstoque(produtoQtd?.toString() ?? '');
     setCategoriaId(produtoCategoriaId ?? null);
+    setEstoqueMinimo(produtoEstoqueMinimo?.toString() ?? '');
+    setDataValidade(produtoDataValidade ?? '');
   }
 
   function excluirProduto(id: number) {
@@ -173,6 +194,19 @@ export default function Produtos() {
           onChangeText={setQuantidadeEstoque}
           placeholder="Quantidade em estoque"
           keyboardType="number-pad"
+          style={styles.input}
+        />
+        <TextInput
+          value={estoqueMinimo}
+          onChangeText={setEstoqueMinimo}
+          placeholder="Estoque minimo"
+          keyboardType="number-pad"
+          style={styles.input}
+        />
+        <TextInput
+          value={dataValidade}
+          onChangeText={setDataValidade}
+          placeholder="Validade (YYYY-MM-DD)"
           style={styles.input}
         />
 
@@ -225,6 +259,10 @@ export default function Produtos() {
               <Text style={styles.itemDescricao}>Categoria: {categoriaNome(item.categoria_id)}</Text>
               <Text style={styles.itemDescricao}>Preco: R$ {item.preco_venda ?? 0}</Text>
               <Text style={styles.itemDescricao}>Estoque: {item.quantidade_estoque ?? 0}</Text>
+              <Text style={styles.itemDescricao}>Minimo: {item.estoque_minimo ?? 0}</Text>
+              <Text style={styles.itemDescricao}>
+                Validade: {item.data_validade || 'Nao informada'}
+              </Text>
             </View>
             <View style={styles.actions}>
               <TouchableOpacity
@@ -235,7 +273,9 @@ export default function Produtos() {
                     item.nome,
                     item.preco_venda,
                     item.quantidade_estoque,
-                    item.categoria_id
+                    item.categoria_id,
+                    item.estoque_minimo,
+                    item.data_validade
                   )
                 }
               >
@@ -297,4 +337,3 @@ const styles = StyleSheet.create({
   editText: { color: '#1e88e5', fontWeight: '600' },
   deleteText: { color: '#e53935', fontWeight: '600' },
 });
-

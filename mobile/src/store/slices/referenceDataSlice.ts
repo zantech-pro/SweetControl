@@ -12,6 +12,8 @@ export type Produto = {
   categoria_id?: number | null;
   preco_venda?: number | null;
   quantidade_estoque?: number | null;
+  estoque_minimo?: number | null;
+  data_validade?: string | null;
   status?: 'ativo' | 'inativo';
 };
 
@@ -83,6 +85,8 @@ export const referenceDataSlice = createSlice({
         categoria_id?: number | null;
         preco_venda?: number | null;
         quantidade_estoque?: number | null;
+        estoque_minimo?: number | null;
+        data_validade?: string | null;
       }>
     ) => {
       const produto = state.produtos.find((item) => item.id === action.payload.id);
@@ -92,10 +96,23 @@ export const referenceDataSlice = createSlice({
       produto.categoria_id = action.payload.categoria_id ?? null;
       produto.preco_venda = action.payload.preco_venda ?? null;
       produto.quantidade_estoque = action.payload.quantidade_estoque ?? null;
+      produto.estoque_minimo = action.payload.estoque_minimo ?? null;
+      produto.data_validade = action.payload.data_validade ?? null;
       state.lastUpdatedAt = new Date().toISOString();
     },
     removeProdutoLocal: (state, action: PayloadAction<number>) => {
       state.produtos = state.produtos.filter((item) => item.id !== action.payload);
+      state.lastUpdatedAt = new Date().toISOString();
+    },
+    adjustProdutoEstoqueLocal: (
+      state,
+      action: PayloadAction<{ id: number; delta: number }>
+    ) => {
+      const produto = state.produtos.find((item) => item.id === action.payload.id);
+      if (!produto) return;
+
+      const atual = produto.quantidade_estoque ?? 0;
+      produto.quantidade_estoque = atual + action.payload.delta;
       state.lastUpdatedAt = new Date().toISOString();
     },
     addClienteLocal: (state, action: PayloadAction<Cliente>) => {
@@ -137,6 +154,7 @@ export const {
   addProdutoLocal,
   updateProdutoLocal,
   removeProdutoLocal,
+  adjustProdutoEstoqueLocal,
   addClienteLocal,
   updateClienteLocal,
   removeClienteLocal,

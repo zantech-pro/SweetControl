@@ -11,7 +11,11 @@ type SyncEntity =
   | 'vendas'
   | 'itens_venda'
   | 'movimentacoes_estoque'
-  | 'gastos_extras';
+  | 'gastos_extras'
+  | 'marketing_templates'
+  | 'crm_registros'
+  | 'pedidos_online'
+  | 'recibos_digitais';
 
 export type PendingSyncItem = {
   id: string;
@@ -132,4 +136,3 @@ export const syncQueueSlice = createSlice({
 export const { enqueueSyncItem, removeSyncItem, registerSyncFailure, clearSyncQueue } =
   syncQueueSlice.actions;
 export default syncQueueSlice.reducer;
-

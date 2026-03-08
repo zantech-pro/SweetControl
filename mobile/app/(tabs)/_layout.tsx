@@ -27,10 +27,19 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="vendas"
+        name="caixa"
         options={{
-          title: 'Vendas',
+          title: 'Caixa',
           tabBarIcon: ({ color, size }) => <Ionicons name="cash" color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="estoque-gestao"
+        options={{
+          title: 'Estoque',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="cube-outline" color={color} size={size} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -38,7 +47,7 @@ export default function TabsLayout() {
         options={{
           title: 'Categorias',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="cube-outline" color={color} size={size} />
+            <Ionicons name="list-outline" color={color} size={size} />
           ),
         }}
       />
@@ -60,6 +69,25 @@ export default function TabsLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="marketing"
+        options={{
+          title: 'Marketing',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="megaphone-outline" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="bi"
+        options={{
+          title: 'BI',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="bar-chart-outline" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tabs.Screen name="vendas" options={{ href: null }} />
       <Tabs.Screen name="estoque" options={{ href: null }} />
     </Tabs>
   );
