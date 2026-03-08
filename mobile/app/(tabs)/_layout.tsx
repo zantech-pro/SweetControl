@@ -1,13 +1,14 @@
 import React from 'react';
 import { Redirect, Tabs, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../../src/store';
 import { logout } from '../../src/store/slices/sessionSlice';
 import { setTheme } from '../../src/store/slices/themeSlice';
 import { ThemeType, themes } from '../../src/theme/themes';
 import { runSyncCycle } from '../../src/store/syncService';
+import { clearFailedSyncItems } from '../../src/store/slices/syncQueueSlice';
 
 export default function TabsLayout() {
   const dispatch = useDispatch<AppDispatch>();
@@ -30,7 +31,7 @@ export default function TabsLayout() {
           <View style={[styles.menuPanel, { backgroundColor: activeTheme.card }]}>
             <Text style={[styles.menuTitle, { color: activeTheme.text }]}>Configuração</Text>
 
-            <View style={styles.menuContent}>
+            <ScrollView style={styles.menuScroll} contentContainerStyle={styles.menuContent}>
               <Text style={styles.sectionTitle}>Sincronização</Text>
               <Text style={styles.smallText}>Usuário ativo: {activeUserId ?? '-'}</Text>
               <Text style={styles.smallText}>
@@ -41,6 +42,12 @@ export default function TabsLayout() {
                 onPress={() => runSyncCycle(dispatch)}
               >
                 <Text style={styles.btnText}>Sincronizar Agora</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.menuBtn, { backgroundColor: '#c62828' }]}
+                onPress={() => dispatch(clearFailedSyncItems())}
+              >
+                <Text style={styles.btnText}>Limpar Pendências com Erro</Text>
               </TouchableOpacity>
 
               <Text style={styles.sectionTitle}>Tema</Text>
@@ -74,7 +81,27 @@ export default function TabsLayout() {
               >
                 <Text style={styles.btnText}>Sair</Text>
               </TouchableOpacity>
-            </View>
+
+              <Text style={styles.sectionTitle}>Pendências de Sync</Text>
+              {syncQueue.pendingSync.filter((item) => item.usuario_id === activeUserId).length === 0 ? (
+                <Text style={styles.smallText}>Sem pendências para este usuário.</Text>
+              ) : (
+                syncQueue.pendingSync
+                  .filter((item) => item.usuario_id === activeUserId)
+                  .map((item) => (
+                    <View key={item.id} style={styles.pendingCard}>
+                      <Text style={styles.pendingTitle}>
+                        {item.entity} - {item.method}
+                      </Text>
+                      <Text style={styles.smallText}>Endpoint: {item.endpoint}</Text>
+                      <Text style={styles.smallText}>Tentativas: {item.attempts}</Text>
+                      <Text style={styles.smallText}>
+                        Erro: {item.lastError ?? 'Sem erro registrado'}
+                      </Text>
+                    </View>
+                  ))
+              )}
+            </ScrollView>
           </View>
         </View>
       ) : null}
@@ -189,9 +216,19 @@ const styles = StyleSheet.create({
   menuBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.25)' },
   menuPanel: { width: 300, padding: 14, borderTopRightRadius: 12, borderBottomRightRadius: 12 },
   menuTitle: { fontSize: 20, fontWeight: '700', marginBottom: 8 },
-  menuContent: { flex: 1, justifyContent: 'center', paddingTop: 20 },
+  menuScroll: { flex: 1 },
+  menuContent: { paddingTop: 18, paddingBottom: 24 },
   menuBtn: { marginTop: 8, borderRadius: 10, padding: 10, alignItems: 'center' },
   btnText: { color: '#fff', fontWeight: '700' },
   sectionTitle: { marginTop: 14, marginBottom: 6, fontWeight: '700', color: '#444' },
   smallText: { color: '#666' },
+  pendingCard: {
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 8,
+    backgroundColor: '#fff',
+  },
+  pendingTitle: { color: '#333', fontWeight: '700', marginBottom: 4 },
 });

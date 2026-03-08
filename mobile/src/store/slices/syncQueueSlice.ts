@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { AxiosError } from 'axios';
 import { apiClient } from '../../api/client';
 import { RootState } from '../index';
 
@@ -77,7 +78,20 @@ export const processPendingSync = createAsyncThunk<
       dispatch(removeSyncItem(item.id));
       successCount += 1;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Falha de sincronizacao';
+      let message = error instanceof Error ? error.message : 'Falha de sincronizacao';
+      if (error instanceof AxiosError) {
+        const data = error.response?.data as
+          | { error?: string; details?: string }
+          | undefined;
+        const status = error.response?.status;
+        if (data?.error) {
+          message = status
+            ? `${status} - ${data.error}${data.details ? ` | ${data.details}` : ''}`
+            : `${data.error}${data.details ? ` | ${data.details}` : ''}`;
+        } else if (status) {
+          message = `${status} - ${error.message}`;
+        }
+      }
       dispatch(registerSyncFailure({ id: item.id, error: message }));
       failedCount += 1;
     }
@@ -130,6 +144,9 @@ export const syncQueueSlice = createSlice({
     clearSyncQueue: (state) => {
       state.pendingSync = [];
     },
+    clearFailedSyncItems: (state) => {
+      state.pendingSync = state.pendingSync.filter((item) => item.attempts === 0);
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(processPendingSync.pending, (state) => {
@@ -151,6 +168,12 @@ export const syncQueueSlice = createSlice({
   },
 });
 
-export const { enqueueSyncItem, removeSyncItem, registerSyncFailure, clearSyncQueue } =
+export const {
+  enqueueSyncItem,
+  removeSyncItem,
+  registerSyncFailure,
+  clearSyncQueue,
+  clearFailedSyncItems,
+} =
   syncQueueSlice.actions;
 export default syncQueueSlice.reducer;

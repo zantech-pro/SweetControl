@@ -19,40 +19,62 @@ if ($nome === '') {
     json_response(422, ['success' => false, 'error' => 'Nome e obrigatorio']);
 }
 
+if ($categoriaId !== null) {
+    $checkCategoria = db()->prepare(
+        'SELECT id FROM categorias_produtos WHERE id = :id AND usuario_id = :usuario_id LIMIT 1'
+    );
+    $checkCategoria->execute([
+        ':id' => $categoriaId,
+        ':usuario_id' => $usuarioId,
+    ]);
+    if (!$checkCategoria->fetch()) {
+        // Categoria inexistente para o usuario (comum em sync fora de ordem). Salva sem categoria.
+        $categoriaId = null;
+    }
+}
+
 $hasDataValidade = column_exists('produtos', 'data_validade');
 
-if ($hasDataValidade) {
-    $stmt = db()->prepare(
-        'INSERT INTO produtos
-        (usuario_id, categoria_id, nome, preco_venda, quantidade_estoque, estoque_minimo, data_validade, status, criado_em, atualizado_em)
-        VALUES
-        (:usuario_id, :categoria_id, :nome, :preco_venda, :quantidade_estoque, :estoque_minimo, :data_validade, :status, NOW(), NOW())'
-    );
-    $stmt->execute([
-        ':usuario_id' => $usuarioId,
-        ':categoria_id' => $categoriaId,
-        ':nome' => $nome,
-        ':preco_venda' => $precoVenda,
-        ':quantidade_estoque' => $quantidadeEstoque,
-        ':estoque_minimo' => $estoqueMinimo,
-        ':data_validade' => $dataValidade,
-        ':status' => $status,
-    ]);
-} else {
-    $stmt = db()->prepare(
-        'INSERT INTO produtos
-        (usuario_id, categoria_id, nome, preco_venda, quantidade_estoque, estoque_minimo, status, criado_em, atualizado_em)
-        VALUES
-        (:usuario_id, :categoria_id, :nome, :preco_venda, :quantidade_estoque, :estoque_minimo, :status, NOW(), NOW())'
-    );
-    $stmt->execute([
-        ':usuario_id' => $usuarioId,
-        ':categoria_id' => $categoriaId,
-        ':nome' => $nome,
-        ':preco_venda' => $precoVenda,
-        ':quantidade_estoque' => $quantidadeEstoque,
-        ':estoque_minimo' => $estoqueMinimo,
-        ':status' => $status,
+try {
+    if ($hasDataValidade) {
+        $stmt = db()->prepare(
+            'INSERT INTO produtos
+            (usuario_id, categoria_id, nome, preco_venda, quantidade_estoque, estoque_minimo, data_validade, status, criado_em, atualizado_em)
+            VALUES
+            (:usuario_id, :categoria_id, :nome, :preco_venda, :quantidade_estoque, :estoque_minimo, :data_validade, :status, NOW(), NOW())'
+        );
+        $stmt->execute([
+            ':usuario_id' => $usuarioId,
+            ':categoria_id' => $categoriaId,
+            ':nome' => $nome,
+            ':preco_venda' => $precoVenda,
+            ':quantidade_estoque' => $quantidadeEstoque,
+            ':estoque_minimo' => $estoqueMinimo,
+            ':data_validade' => $dataValidade,
+            ':status' => $status,
+        ]);
+    } else {
+        $stmt = db()->prepare(
+            'INSERT INTO produtos
+            (usuario_id, categoria_id, nome, preco_venda, quantidade_estoque, estoque_minimo, status, criado_em, atualizado_em)
+            VALUES
+            (:usuario_id, :categoria_id, :nome, :preco_venda, :quantidade_estoque, :estoque_minimo, :status, NOW(), NOW())'
+        );
+        $stmt->execute([
+            ':usuario_id' => $usuarioId,
+            ':categoria_id' => $categoriaId,
+            ':nome' => $nome,
+            ':preco_venda' => $precoVenda,
+            ':quantidade_estoque' => $quantidadeEstoque,
+            ':estoque_minimo' => $estoqueMinimo,
+            ':status' => $status,
+        ]);
+    }
+} catch (Throwable $e) {
+    json_response(500, [
+        'success' => false,
+        'error' => 'Falha ao criar produto',
+        'details' => $e->getMessage(),
     ]);
 }
 
