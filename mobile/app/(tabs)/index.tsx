@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { themes, ThemeType } from '../src/theme/themes';
-import { setTheme } from '../src/store/slices/themeSlice';
-import { RootState } from '../src/store';
+import { themes, ThemeType } from '../../src/theme/themes';
+import { setTheme } from '../../src/store/slices/themeSlice';
+import { RootState } from '../../src/store';
 
 export default function Home() {
   const dispatch = useDispatch();
