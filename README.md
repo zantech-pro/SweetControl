@@ -4,6 +4,35 @@ O **SweetControl** é uma plataforma integrada para microempreendedores do ramo 
 
 Atenção!!! A grade expertise do **offline-first** neste projeto e que o usuario depois que logou pela primeira vez, **mesmo que fique sem internet podera desfrutar de todas as funcionalidades do App** indepednete da cloud (Backend na hospedagem).
 
+## 📱 Interface do Usuário (UI)
+
+O design do SweetControl foi pensado para ser limpo e intuitivo, utilizando a paleta de cores institucional (multiplos temas) para transmitir confiança e organização.
+
+### 📸 Demonstração das Telas
+
+| Login | Criar Conta | Tela Pos Login Caixa |
+| :---: | :---: | :---: |
+| ![Login](./docs/login.jpeg) | ![CriarConta](./docs/criar_conta.jpeg) | ![Caixa](./docs/caixa.jpeg) |
+| *Visão das contas registrada no device.* | *Criar Conta do zero.* | *tela inicial Frente de Caixa.* |
+
+| Cadastro de Categoria | Cadastrar Produtos | Cadastrar Clientes (opcional) |
+| :---: | :---: | :---: |
+| ![Categoria](./docs/categorias.jpeg) | ![Castrar Produtos](./docs/produtos.jpeg) | ![Clientes](./docs/clientes.jpeg) |
+| *Area de Cadastro das categorias.* | *Casdastro dos produtos.* | *Registros dos clientes para colocoar nos recebos.* |
+
+| Tela de Recebibo na frente de caixa | Markenting | Financeiro (BI) |
+| :---: | :---: | :---: |
+| ![Recibo](./docs/recibo.jpeg) | ![marketing](./docs/marketing.jpeg) | ![Clientes](./docs/bi.jpeg) |
+| *Apos registrar venda, acione borão compartilhar recibo.* | *Tempalte para ser compartilhado no whatsapp.* | *Controle Financeiro (BI).* |
+
+| Menu de ConfiguraçõesTela de Recebibo na frente de caixa |
+| :---: | 
+| ![Config](./docs/menu_config.jpeg) |
+| *Ajustar Tema, sicronizar manualmente e acompanhar sicronizações em andamento | 
+
+> **Nota:** As imagens acima são ilustrativas do ambiente de homologação. O layout adapta-se automaticamente a diferentes tamanhos de tela de dispositivos Android.
+
+
 ## 🏗️ Estrutura do Projeto
 
 Abaixo está a organização dos principais diretórios do ecossistema, mapeados para facilitar a manutenção e o deploy:
