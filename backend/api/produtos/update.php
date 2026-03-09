@@ -4,7 +4,7 @@ require_once dirname(__DIR__) . '/_bootstrap.php';
 
 require_method('PUT');
 $input = get_json_input();
-require_fields($input, ['id', 'nome']);
+require_fields($input, ['id', 'nome', 'preco_venda', 'data_validade']);
 
 $usuarioId = resolve_user_id($input);
 $id = (int) $input['id'];
@@ -14,6 +14,16 @@ $precoVenda = to_nullable_float($input['preco_venda'] ?? null);
 $quantidadeEstoque = to_nullable_int($input['quantidade_estoque'] ?? null);
 $estoqueMinimo = to_nullable_int($input['estoque_minimo'] ?? null);
 $dataValidade = to_nullable_string($input['data_validade'] ?? null);
+
+if ($nome === '') {
+    json_response(422, ['success' => false, 'error' => 'Nome e obrigatorio']);
+}
+if ($precoVenda === null || $precoVenda <= 0) {
+    json_response(422, ['success' => false, 'error' => 'Preco de venda invalido']);
+}
+if ($dataValidade === null || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $dataValidade)) {
+    json_response(422, ['success' => false, 'error' => 'Data de validade invalida. Use YYYY-MM-DD']);
+}
 
 $hasDataValidade = column_exists('produtos', 'data_validade');
 
@@ -62,4 +72,3 @@ if ($hasDataValidade) {
 }
 
 json_response(200, ['success' => true, 'updated' => $stmt->rowCount()]);
-

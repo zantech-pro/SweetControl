@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FlatList, Share, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, Share, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../../src/store';
 import { ThemeType, themes } from '../../src/theme/themes';
@@ -46,13 +46,17 @@ export default function Marketing() {
   }
 
   function salvarTemplate() {
+    if (!activeUserId) {
+      Alert.alert('Sessao', 'Sessao invalida. Faca login novamente.');
+      return;
+    }
     if (!titulo.trim() || !conteudo.trim()) return;
 
     if (editandoId) {
       dispatch(
         updateMarketingTemplateLocal({
           id: editandoId,
-          usuario_id: activeUserId ?? 1,
+          usuario_id: activeUserId,
           titulo: titulo.trim(),
           conteudo: conteudo.trim(),
           tipo,
@@ -63,7 +67,7 @@ export default function Marketing() {
           entity: 'marketing_templates',
           endpoint: '/marketing/templates/update.php',
           method: 'PUT',
-          usuario_id: activeUserId ?? 1,
+          usuario_id: activeUserId,
           payload: { id: editandoId, titulo: titulo.trim(), conteudo: conteudo.trim(), tipo },
         })
       );
@@ -75,7 +79,7 @@ export default function Marketing() {
     dispatch(
       addMarketingTemplateLocal({
         id,
-        usuario_id: activeUserId ?? 1,
+        usuario_id: activeUserId,
         titulo: titulo.trim(),
         conteudo: conteudo.trim(),
         tipo,
@@ -86,9 +90,9 @@ export default function Marketing() {
         entity: 'marketing_templates',
         endpoint: '/marketing/templates/create.php',
         method: 'POST',
-        usuario_id: activeUserId ?? 1,
+        usuario_id: activeUserId,
         payload: {
-          usuario_id: activeUserId ?? 1,
+          usuario_id: activeUserId,
           titulo: titulo.trim(),
           conteudo: conteudo.trim(),
           tipo,
@@ -99,19 +103,28 @@ export default function Marketing() {
   }
 
   function excluirTemplate(id: number) {
-    dispatch(removeMarketingTemplateLocal({ id, usuario_id: activeUserId ?? 1 }));
+    if (!activeUserId) {
+      Alert.alert('Sessao', 'Sessao invalida. Faca login novamente.');
+      return;
+    }
+
+    dispatch(removeMarketingTemplateLocal({ id, usuario_id: activeUserId }));
     dispatch(
       enqueueSyncItem({
         entity: 'marketing_templates',
         endpoint: '/marketing/templates/delete.php',
         method: 'DELETE',
-        usuario_id: activeUserId ?? 1,
-        payload: { id, usuario_id: activeUserId ?? 1 },
+        usuario_id: activeUserId,
+        payload: { id, usuario_id: activeUserId },
       })
     );
   }
 
   function salvarCrm() {
+    if (!activeUserId) {
+      Alert.alert('Sessao', 'Sessao invalida. Faca login novamente.');
+      return;
+    }
     if (!crmClienteId || !crmObs.trim()) return;
     const cliente = clientes.find((item) => item.id === crmClienteId);
     if (!cliente) return;
@@ -119,7 +132,7 @@ export default function Marketing() {
     dispatch(
       addCrmRegistroLocal({
         id: -Date.now(),
-        usuario_id: activeUserId ?? 1,
+        usuario_id: activeUserId,
         cliente_id: crmClienteId,
         cliente_nome: cliente.nome,
         observacao: crmObs.trim(),
@@ -131,9 +144,9 @@ export default function Marketing() {
         entity: 'crm_registros',
         endpoint: '/crm/registros/create.php',
         method: 'POST',
-        usuario_id: activeUserId ?? 1,
+        usuario_id: activeUserId,
         payload: {
-          usuario_id: activeUserId ?? 1,
+          usuario_id: activeUserId,
           cliente_id: crmClienteId,
           observacao: crmObs.trim(),
         },

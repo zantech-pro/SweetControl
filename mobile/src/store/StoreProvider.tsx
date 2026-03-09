@@ -5,9 +5,12 @@ import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from './index';
 import { runSyncCycle } from './syncService';
+import { resetSyncRuntimeState } from './slices/syncQueueSlice';
 
 function AutoSyncManager() {
   useEffect(() => {
+    store.dispatch(resetSyncRuntimeState());
+
     const runOnce = () => {
       void runSyncCycle(store.dispatch, store.getState);
     };

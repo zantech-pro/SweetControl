@@ -4,7 +4,7 @@ require_once dirname(__DIR__) . '/_bootstrap.php';
 
 require_method('POST');
 $input = get_json_input();
-require_fields($input, ['nome']);
+require_fields($input, ['nome', 'preco_venda', 'data_validade']);
 
 $usuarioId = resolve_user_id($input);
 $nome = trim((string) $input['nome']);
@@ -17,6 +17,12 @@ $status = to_nullable_string($input['status'] ?? 'ativo') ?? 'ativo';
 
 if ($nome === '') {
     json_response(422, ['success' => false, 'error' => 'Nome e obrigatorio']);
+}
+if ($precoVenda === null || $precoVenda <= 0) {
+    json_response(422, ['success' => false, 'error' => 'Preco de venda invalido']);
+}
+if ($dataValidade === null || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $dataValidade)) {
+    json_response(422, ['success' => false, 'error' => 'Data de validade invalida. Use YYYY-MM-DD']);
 }
 
 if ($categoriaId !== null) {

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -55,6 +56,10 @@ export default function EstoqueGestao() {
   );
 
   function registrarMovimento() {
+    if (!activeUserId) {
+      Alert.alert('Sessao', 'Sessao invalida. Faca login novamente.');
+      return;
+    }
     if (!produtoId) return;
     const qtd = Number(quantidade);
     if (Number.isNaN(qtd) || qtd <= 0) return;
@@ -66,14 +71,14 @@ export default function EstoqueGestao() {
     dispatch(
       adjustProdutoEstoqueLocal({
         id: produtoId,
-        usuario_id: activeUserId ?? 1,
+        usuario_id: activeUserId,
         delta,
       })
     );
     dispatch(
       addMovimentacaoEstoqueLocal({
         id: -Date.now(),
-        usuario_id: activeUserId ?? 1,
+        usuario_id: activeUserId,
         produto_id: produtoId,
         produto_nome: produto.nome,
         tipo_movimento: tipo,
@@ -89,10 +94,10 @@ export default function EstoqueGestao() {
         entity: 'movimentacoes_estoque',
         endpoint: '/estoque/movimentacoes/create.php',
         method: 'POST',
-        usuario_id: activeUserId ?? 1,
+        usuario_id: activeUserId,
         payload: {
           produto_id: produtoId,
-          usuario_id: activeUserId ?? 1,
+          usuario_id: activeUserId,
           tipo_movimento: tipo,
           quantidade: qtd,
           motivo: motivo.trim() || 'Movimento manual',

@@ -17,6 +17,15 @@ import {
   updateProdutoLocal,
 } from '../../src/store/slices/referenceDataSlice';
 import { enqueueSyncItem } from '../../src/store/slices/syncQueueSlice';
+import {
+  formatCurrencyBRL,
+  formatDateToBR,
+  formatISODateToBR,
+  maskCurrencyInputBRL,
+  maskDateBR,
+  parseCurrencyInputBRL,
+  parseDateBRToISO,
+} from '../../src/utils/formatters';
 
 export default function Produtos() {
   const dispatch = useDispatch<AppDispatch>();
@@ -54,17 +63,28 @@ export default function Produtos() {
   }
 
   function salvarProduto() {
+    if (!activeUserId) {
+      Alert.alert('Sessao', 'Sessao invalida. Faca login novamente.');
+      return;
+    }
+
     const nomeNormalizado = nome.trim();
     if (!nomeNormalizado) {
       Alert.alert('Validacao', 'Informe o nome do produto.');
       return;
     }
 
-    const preco = precoVenda.trim() ? Number(precoVenda.replace(',', '.')) : null;
+    if (!precoVenda.trim()) {
+      Alert.alert('Validacao', 'Informe o preco do produto.');
+      return;
+    }
+
+    const preco = parseCurrencyInputBRL(precoVenda);
     const estoque = quantidadeEstoque.trim() ? Number(quantidadeEstoque) : null;
     const minimo = estoqueMinimo.trim() ? Number(estoqueMinimo) : null;
+    const dataValidadeISO = parseDateBRToISO(dataValidade);
 
-    if (preco !== null && Number.isNaN(preco)) {
+    if (Number.isNaN(preco) || preco <= 0) {
       Alert.alert('Validacao', 'Preco de venda invalido.');
       return;
     }
@@ -76,18 +96,22 @@ export default function Produtos() {
       Alert.alert('Validacao', 'Estoque minimo invalido.');
       return;
     }
+    if (!dataValidadeISO) {
+      Alert.alert('Validacao', 'Data de validade invalida. Use dd-mm-aaaa.');
+      return;
+    }
 
     if (editandoId) {
       dispatch(
         updateProdutoLocal({
           id: editandoId,
-          usuario_id: activeUserId ?? 1,
+          usuario_id: activeUserId,
           nome: nomeNormalizado,
           categoria_id: categoriaId,
           preco_venda: preco,
           quantidade_estoque: estoque,
           estoque_minimo: minimo,
-          data_validade: dataValidade.trim() || null,
+          data_validade: dataValidadeISO,
         })
       );
 
@@ -96,16 +120,16 @@ export default function Produtos() {
           entity: 'produtos',
           endpoint: '/produtos/update.php',
           method: 'PUT',
-          usuario_id: activeUserId ?? 1,
+          usuario_id: activeUserId,
           payload: {
             id: editandoId,
-            usuario_id: activeUserId ?? 1,
+            usuario_id: activeUserId,
             nome: nomeNormalizado,
             categoria_id: categoriaId,
             preco_venda: preco,
             quantidade_estoque: estoque,
             estoque_minimo: minimo,
-            data_validade: dataValidade.trim() || null,
+            data_validade: dataValidadeISO,
           },
         })
       );
@@ -118,13 +142,13 @@ export default function Produtos() {
     dispatch(
       addProdutoLocal({
         id: tempId,
-        usuario_id: activeUserId ?? 1,
+        usuario_id: activeUserId,
         nome: nomeNormalizado,
         categoria_id: categoriaId,
         preco_venda: preco,
         quantidade_estoque: estoque,
         estoque_minimo: minimo,
-        data_validade: dataValidade.trim() || null,
+        data_validade: dataValidadeISO,
         status: 'ativo',
       })
     );
@@ -134,15 +158,16 @@ export default function Produtos() {
         entity: 'produtos',
         endpoint: '/produtos/create.php',
         method: 'POST',
-        usuario_id: activeUserId ?? 1,
+        usuario_id: activeUserId,
         payload: {
-          usuario_id: activeUserId ?? 1,
+          local_id: tempId,
+          usuario_id: activeUserId,
           nome: nomeNormalizado,
           categoria_id: categoriaId,
           preco_venda: preco,
           quantidade_estoque: estoque,
           estoque_minimo: minimo,
-          data_validade: dataValidade.trim() || null,
+          data_validade: dataValidadeISO,
           status: 'ativo',
         },
       })
@@ -162,22 +187,50 @@ export default function Produtos() {
   ) {
     setEditandoId(id);
     setNome(produtoNome);
-    setPrecoVenda(produtoPreco?.toString() ?? '');
+    setPrecoVenda(produtoPreco ? formatCurrencyBRL(produtoPreco) : '');
     setQuantidadeEstoque(produtoQtd?.toString() ?? '');
     setCategoriaId(produtoCategoriaId ?? null);
     setEstoqueMinimo(produtoEstoqueMinimo?.toString() ?? '');
-    setDataValidade(produtoDataValidade ?? '');
+    setDataValidade(formatISODateToBR(produtoDataValidade));
+  }
+
+  function abrirCalendario() {
+    try {
+      const picker = require('@react-native-community/datetimepicker');
+      const DateTimePickerAndroid = picker.DateTimePickerAndroid;
+      const parsedISO = parseDateBRToISO(dataValidade);
+      const base = parsedISO ? new Date(`${parsedISO}T00:00:00`) : new Date();
+
+      DateTimePickerAndroid.open({
+        value: base,
+        mode: 'date',
+        onChange: (_event: unknown, selectedDate?: Date) => {
+          if (!selectedDate) return;
+          setDataValidade(formatDateToBR(selectedDate));
+        },
+      });
+    } catch (_error) {
+      Alert.alert(
+        'Calendario indisponivel',
+        'Para selecionar data no calendario, instale @react-native-community/datetimepicker.'
+      );
+    }
   }
 
   function excluirProduto(id: number) {
-    dispatch(removeProdutoLocal({ id, usuario_id: activeUserId ?? 1 }));
+    if (!activeUserId) {
+      Alert.alert('Sessao', 'Sessao invalida. Faca login novamente.');
+      return;
+    }
+
+    dispatch(removeProdutoLocal({ id, usuario_id: activeUserId }));
     dispatch(
       enqueueSyncItem({
         entity: 'produtos',
         endpoint: '/produtos/delete.php',
         method: 'DELETE',
-        usuario_id: activeUserId ?? 1,
-        payload: { id, usuario_id: activeUserId ?? 1 },
+        usuario_id: activeUserId,
+        payload: { id, usuario_id: activeUserId },
       })
     );
   }
@@ -196,8 +249,8 @@ export default function Produtos() {
         <TextInput value={nome} onChangeText={setNome} placeholder="Nome do produto" style={styles.input} />
         <TextInput
           value={precoVenda}
-          onChangeText={setPrecoVenda}
-          placeholder="Preco de venda (ex: 29.90)"
+          onChangeText={(value) => setPrecoVenda(maskCurrencyInputBRL(value))}
+          placeholder="Preco de venda (R$ 0,00)"
           keyboardType="decimal-pad"
           style={styles.input}
         />
@@ -217,10 +270,14 @@ export default function Produtos() {
         />
         <TextInput
           value={dataValidade}
-          onChangeText={setDataValidade}
-          placeholder="Validade (YYYY-MM-DD)"
+          onChangeText={(value) => setDataValidade(maskDateBR(value))}
+          placeholder="Validade (dd-mm-aaaa)"
+          keyboardType="number-pad"
           style={styles.input}
         />
+        <TouchableOpacity style={styles.secondaryBtn} onPress={abrirCalendario}>
+          <Text style={styles.secondaryBtnText}>Selecionar no calendario</Text>
+        </TouchableOpacity>
 
         <Text style={styles.label}>Categoria</Text>
         <FlatList
@@ -269,11 +326,11 @@ export default function Produtos() {
             <View style={styles.itemInfo}>
               <Text style={[styles.itemNome, { color: activeTheme.text }]}>{item.nome}</Text>
               <Text style={styles.itemDescricao}>Categoria: {categoriaNome(item.categoria_id)}</Text>
-              <Text style={styles.itemDescricao}>Preco: R$ {item.preco_venda ?? 0}</Text>
+              <Text style={styles.itemDescricao}>Preco: {formatCurrencyBRL(item.preco_venda ?? 0)}</Text>
               <Text style={styles.itemDescricao}>Estoque: {item.quantidade_estoque ?? 0}</Text>
               <Text style={styles.itemDescricao}>Minimo: {item.estoque_minimo ?? 0}</Text>
               <Text style={styles.itemDescricao}>
-                Validade: {item.data_validade || 'Nao informada'}
+                Validade: {formatISODateToBR(item.data_validade) || 'Nao informada'}
               </Text>
             </View>
             <View style={styles.actions}>

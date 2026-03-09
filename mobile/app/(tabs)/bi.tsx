@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { FlatList, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../../src/store';
 import { ThemeType, themes } from '../../src/theme/themes';
@@ -101,13 +101,17 @@ export default function BI() {
   }, [monthlySeries]);
 
   function adicionarGasto() {
+    if (!activeUserId) {
+      Alert.alert('Sessao', 'Sessao invalida. Faca login novamente.');
+      return;
+    }
     const v = Number(valor.replace(',', '.'));
     if (Number.isNaN(v) || v <= 0) return;
 
     dispatch(
       addGastoExtraLocal({
         id: -Date.now(),
-        usuario_id: activeUserId ?? 1,
+        usuario_id: activeUserId,
         categoria: categoria.trim() || 'Outros',
         descricao: descricao.trim() || 'Sem descricao',
         valor: v,
@@ -120,9 +124,9 @@ export default function BI() {
         entity: 'gastos_extras',
         endpoint: '/gastos/create.php',
         method: 'POST',
-        usuario_id: activeUserId ?? 1,
+        usuario_id: activeUserId,
         payload: {
-          usuario_id: activeUserId ?? 1,
+          usuario_id: activeUserId,
           categoria: categoria.trim() || 'Outros',
           descricao: descricao.trim() || 'Sem descricao',
           valor: v,
@@ -196,17 +200,16 @@ export default function BI() {
       </View>
 
       <Text style={styles.section}>Produtos mais vendidos</Text>
-      <FlatList
-        data={produtosMaisVendidos}
-        keyExtractor={(item) => item[0]}
-        ListEmptyComponent={<Text style={styles.small}>Sem vendas no mes.</Text>}
-        renderItem={({ item }) => (
-          <View style={[styles.rankCard, { backgroundColor: activeTheme.card }]}>
+      {produtosMaisVendidos.length === 0 ? (
+        <Text style={styles.small}>Sem vendas no mes.</Text>
+      ) : (
+        produtosMaisVendidos.map((item) => (
+          <View key={item[0]} style={[styles.rankCard, { backgroundColor: activeTheme.card }]}>
             <Text style={{ color: activeTheme.text }}>{item[0]}</Text>
             <Text style={styles.small}>Qtd: {item[1]}</Text>
           </View>
-        )}
-      />
+        ))
+      )}
 
       <View style={[styles.metricsCard, { backgroundColor: activeTheme.card }]}>
         <Text style={styles.section}>Lancar gasto extra</Text>

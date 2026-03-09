@@ -11,6 +11,11 @@ import {
 } from '../../src/store/slices/businessSlice';
 import { adjustProdutoEstoqueLocal } from '../../src/store/slices/referenceDataSlice';
 import { enqueueSyncItem } from '../../src/store/slices/syncQueueSlice';
+import {
+  formatCurrencyBRL,
+  maskCurrencyInputBRL,
+  parseCurrencyInputBRL,
+} from '../../src/utils/formatters';
 
 type CartItem = { produto_id: number; nome: string; preco: number; quantidade: number };
 
@@ -22,7 +27,7 @@ export default function Caixa() {
     state.referenceData.categorias.filter((item) => item.usuario_id === activeUserId)
   );
   const produtos = useSelector((state: RootState) =>
-    state.referenceData.produtos.filter((item) => item.usuario_id === activeUserId)
+    state.referenceData.produtos.filter((item) => item.usuario_id === activeUserId && item.quantidade_estoque > 0)
   );
   const clientes = useSelector((state: RootState) =>
     state.referenceData.clientes.filter((item) => item.usuario_id === activeUserId)
@@ -43,7 +48,7 @@ export default function Caixa() {
     () => cart.reduce((acc, item) => acc + item.preco * item.quantidade, 0),
     [cart]
   );
-  const descontoValor = useMemo(() => Number(desconto || 0), [desconto]);
+  const descontoValor = useMemo(() => parseCurrencyInputBRL(desconto), [desconto]);
   const totalLiquido = useMemo(() => Math.max(totalBruto - descontoValor, 0), [totalBruto, descontoValor]);
   const produtosVisiveis = useMemo(() => {
     if (selectedCategoryIds.length === 0) return produtos;
@@ -91,6 +96,10 @@ export default function Caixa() {
   }
 
   function finalizarVenda() {
+    if (!activeUserId) {
+      Alert.alert('Sessao', 'Sessao invalida. Faca login novamente.');
+      return;
+    }
     if (!cart.length) {
       Alert.alert('Carrinho vazio', 'Adicione pelo menos um produto.');
       return;
@@ -109,7 +118,7 @@ export default function Caixa() {
     dispatch(
       addVendaLocal({
         id: vendaId,
-        usuario_id: activeUserId ?? 1,
+        usuario_id: activeUserId,
         cliente_id: clienteId,
         cliente_nome: cliente?.nome ?? null,
         itens,
@@ -128,9 +137,10 @@ export default function Caixa() {
         entity: 'vendas',
         endpoint: '/vendas/create.php',
         method: 'POST',
-        usuario_id: activeUserId ?? 1,
+        usuario_id: activeUserId,
         payload: {
-          usuario_id: activeUserId ?? 1,
+          local_id: vendaId,
+          usuario_id: activeUserId,
           cliente_id: clienteId,
           total_bruto: totalBruto,
           desconto: descontoValor,
@@ -145,14 +155,14 @@ export default function Caixa() {
       dispatch(
         adjustProdutoEstoqueLocal({
           id: item.produto_id,
-          usuario_id: activeUserId ?? 1,
+          usuario_id: activeUserId,
           delta: -item.quantidade,
         })
       );
       dispatch(
         addMovimentacaoEstoqueLocal({
           id: -(Date.now() + item.produto_id),
-          usuario_id: activeUserId ?? 1,
+          usuario_id: activeUserId,
           produto_id: item.produto_id,
           produto_nome: item.nome,
           tipo_movimento: 'saida',
@@ -169,10 +179,10 @@ export default function Caixa() {
           entity: 'itens_venda',
           endpoint: '/vendas/itens/create.php',
           method: 'POST',
-          usuario_id: activeUserId ?? 1,
+          usuario_id: activeUserId,
           payload: {
             venda_id: vendaId,
-            usuario_id: activeUserId ?? 1,
+            usuario_id: activeUserId,
             produto_id: item.produto_id,
             quantidade: item.quantidade,
             preco_unitario: item.preco,
@@ -185,10 +195,10 @@ export default function Caixa() {
           entity: 'movimentacoes_estoque',
           endpoint: '/estoque/movimentacoes/create.php',
           method: 'POST',
-          usuario_id: activeUserId ?? 1,
+          usuario_id: activeUserId,
           payload: {
             produto_id: item.produto_id,
-            usuario_id: activeUserId ?? 1,
+            usuario_id: activeUserId,
             tipo_movimento: 'saida',
             quantidade: item.quantidade,
             motivo: 'Venda',
@@ -204,9 +214,9 @@ export default function Caixa() {
       `Data: ${new Date().toLocaleString()}`,
       `Cliente: ${cliente?.nome ?? 'Consumidor final'}`,
       ...itens.map((item) => `${item.nome_produto} x${item.quantidade} = R$ ${item.subtotal.toFixed(2)}`),
-      `Total bruto: R$ ${totalBruto.toFixed(2)}`,
-      `Desconto: R$ ${descontoValor.toFixed(2)}`,
-      `Total liquido: R$ ${totalLiquido.toFixed(2)}`,
+      `Total bruto: ${formatCurrencyBRL(totalBruto)}`,
+      `Desconto: ${formatCurrencyBRL(descontoValor)}`,
+      `Total liquido: ${formatCurrencyBRL(totalLiquido)}`,
       `Pagamento: ${metodo}`,
     ].join('\n');
     setUltimoRecibo(reciboTexto);
@@ -217,6 +227,10 @@ export default function Caixa() {
   }
 
   async function compartilharRecibo() {
+    if (!activeUserId) {
+      Alert.alert('Sessao', 'Sessao invalida. Faca login novamente.');
+      return;
+    }
     if (!ultimoRecibo) return;
     await Share.share({ message: ultimoRecibo });
     dispatch(
@@ -224,9 +238,9 @@ export default function Caixa() {
         entity: 'recibos_digitais',
         endpoint: '/vendas/recibos/create.php',
         method: 'POST',
-        usuario_id: activeUserId ?? 1,
+        usuario_id: activeUserId,
         payload: {
-          usuario_id: activeUserId ?? 1,
+          usuario_id: activeUserId,
           conteudo: ultimoRecibo,
           gerado_em: new Date().toISOString(),
         },
@@ -298,7 +312,7 @@ export default function Caixa() {
         renderItem={({ item }) => (
           <TouchableOpacity style={[styles.productBtn, { backgroundColor: activeTheme.card }]} onPress={() => addProduto(item.id)}>
             <Text style={{ fontWeight: '700', color: activeTheme.text }}>{item.nome}</Text>
-            <Text style={styles.smallText}>R$ {item.preco_venda ?? 0}</Text>
+            <Text style={styles.smallText}>{formatCurrencyBRL(item.preco_venda ?? 0)}</Text>
           </TouchableOpacity>
         )}
       />
@@ -312,7 +326,7 @@ export default function Caixa() {
           <View style={[styles.cartItem, { backgroundColor: activeTheme.card }]}>
             <View style={{ flex: 1 }}>
               <Text style={{ color: activeTheme.text, fontWeight: '700' }}>{item.nome}</Text>
-              <Text style={styles.smallText}>Subtotal: R$ {(item.preco * item.quantidade).toFixed(2)}</Text>
+              <Text style={styles.smallText}>Subtotal: {formatCurrencyBRL(item.preco * item.quantidade)}</Text>
             </View>
             <View style={styles.qtyActions}>
               <TouchableOpacity onPress={() => alterarQtd(item.produto_id, -1)}>
@@ -329,8 +343,8 @@ export default function Caixa() {
 
       <TextInput
         value={desconto}
-        onChangeText={setDesconto}
-        placeholder="Desconto (R$)"
+        onChangeText={(value) => setDesconto(maskCurrencyInputBRL(value))}
+        placeholder="Desconto (R$ 0,00)"
         keyboardType="decimal-pad"
         style={styles.input}
       />
@@ -346,8 +360,8 @@ export default function Caixa() {
         ))}
       </View>
 
-      <Text style={styles.total}>Total bruto: R$ {totalBruto.toFixed(2)}</Text>
-      <Text style={styles.total}>Total liquido: R$ {totalLiquido.toFixed(2)}</Text>
+      <Text style={styles.total}>Total bruto: {formatCurrencyBRL(totalBruto)}</Text>
+      <Text style={styles.total}>Total liquido: {formatCurrencyBRL(totalLiquido)}</Text>
 
       <TouchableOpacity style={[styles.finalizarBtn, { backgroundColor: activeTheme.primary }]} onPress={finalizarVenda}>
         <Text style={styles.finalizarText}>Registrar Venda</Text>
@@ -365,19 +379,23 @@ export default function Caixa() {
             <View style={{ flex: 1 }}>
               <Text style={{ color: activeTheme.text, fontWeight: '700' }}>{item.cliente_nome}</Text>
               <Text style={styles.smallText}>{item.itens_resumo}</Text>
-              <Text style={styles.smallText}>R$ {item.valor_total.toFixed(2)} | {item.status}</Text>
+              <Text style={styles.smallText}>{formatCurrencyBRL(item.valor_total)} | {item.status}</Text>
             </View>
             <View>
               <TouchableOpacity
-                onPress={() =>
+                onPress={() => {
+                  if (!activeUserId) {
+                    Alert.alert('Sessao', 'Sessao invalida. Faca login novamente.');
+                    return;
+                  }
                   dispatch(
                     updatePedidoOnlineStatusLocal({
                       id: item.id,
-                      usuario_id: activeUserId ?? 1,
+                      usuario_id: activeUserId,
                       status: 'aceito',
                     })
-                  )
-                }
+                  );
+                }}
               >
                 <Text style={styles.actionText}>OK</Text>
               </TouchableOpacity>

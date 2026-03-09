@@ -43,9 +43,19 @@ export default function Categorias() {
   }
 
   function salvarCategoria() {
+    if (!activeUserId) {
+      Alert.alert('Sessao', 'Sessao invalida. Faca login novamente.');
+      return;
+    }
+
     const nomeNormalizado = nome.trim();
+    const descricaoNormalizada = descricao.trim();
     if (!nomeNormalizado) {
       Alert.alert('Validacao', 'Informe o nome da categoria.');
+      return;
+    }
+    if (!descricaoNormalizada) {
+      Alert.alert('Validacao', 'Informe a descricao da categoria.');
       return;
     }
 
@@ -53,9 +63,9 @@ export default function Categorias() {
       dispatch(
         updateCategoriaLocal({
           id: editandoId,
-          usuario_id: activeUserId ?? 1,
+          usuario_id: activeUserId,
           nome: nomeNormalizado,
-          descricao: descricao.trim() || null,
+          descricao: descricaoNormalizada,
         })
       );
 
@@ -64,12 +74,12 @@ export default function Categorias() {
           entity: 'categorias_produtos',
           endpoint: '/categorias/update.php',
           method: 'PUT',
-          usuario_id: activeUserId ?? 1,
+          usuario_id: activeUserId,
           payload: {
             id: editandoId,
-            usuario_id: activeUserId ?? 1,
+            usuario_id: activeUserId,
             nome: nomeNormalizado,
-            descricao: descricao.trim() || null,
+            descricao: descricaoNormalizada,
           },
         })
       );
@@ -82,9 +92,9 @@ export default function Categorias() {
     dispatch(
       addCategoriaLocal({
         id: tempId,
-        usuario_id: activeUserId ?? 1,
+        usuario_id: activeUserId,
         nome: nomeNormalizado,
-        descricao: descricao.trim() || null,
+        descricao: descricaoNormalizada,
       })
     );
 
@@ -93,11 +103,12 @@ export default function Categorias() {
         entity: 'categorias_produtos',
         endpoint: '/categorias/create.php',
         method: 'POST',
-        usuario_id: activeUserId ?? 1,
+        usuario_id: activeUserId,
         payload: {
-          usuario_id: activeUserId ?? 1,
+          local_id: tempId,
+          usuario_id: activeUserId,
           nome: nomeNormalizado,
-          descricao: descricao.trim() || null,
+          descricao: descricaoNormalizada,
         },
       })
     );
@@ -112,14 +123,19 @@ export default function Categorias() {
   }
 
   function excluirCategoria(id: number) {
-    dispatch(removeCategoriaLocal({ id, usuario_id: activeUserId ?? 1 }));
+    if (!activeUserId) {
+      Alert.alert('Sessao', 'Sessao invalida. Faca login novamente.');
+      return;
+    }
+
+    dispatch(removeCategoriaLocal({ id, usuario_id: activeUserId }));
     dispatch(
       enqueueSyncItem({
         entity: 'categorias_produtos',
         endpoint: '/categorias/delete.php',
         method: 'DELETE',
-        usuario_id: activeUserId ?? 1,
-        payload: { id, usuario_id: activeUserId ?? 1 },
+        usuario_id: activeUserId,
+        payload: { id, usuario_id: activeUserId },
       })
     );
   }
@@ -139,7 +155,7 @@ export default function Categorias() {
         <TextInput
           value={descricao}
           onChangeText={setDescricao}
-          placeholder="Descricao (opcional)"
+          placeholder="Descricao"
           style={styles.input}
         />
         <TouchableOpacity

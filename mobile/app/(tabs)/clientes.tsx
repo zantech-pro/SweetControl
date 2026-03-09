@@ -17,6 +17,12 @@ import {
   updateClienteLocal,
 } from '../../src/store/slices/referenceDataSlice';
 import { enqueueSyncItem } from '../../src/store/slices/syncQueueSlice';
+import {
+  isValidEmail,
+  isValidPhoneBR,
+  maskPhoneBR,
+  normalizeEmail,
+} from '../../src/utils/formatters';
 
 export default function Clientes() {
   const dispatch = useDispatch<AppDispatch>();
@@ -44,33 +50,41 @@ export default function Clientes() {
     setEditandoId(null);
   }
 
-  function validarEmail(value: string) {
-    if (!value.trim()) return true;
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-  }
-
   function salvarCliente() {
+    if (!activeUserId) {
+      Alert.alert('Sessao', 'Sessao invalida. Faca login novamente.');
+      return;
+    }
+
     const nomeNormalizado = nome.trim();
+    const telefoneNormalizado = maskPhoneBR(telefone);
+    const emailNormalizado = normalizeEmail(email);
+
     if (!nomeNormalizado) {
       Alert.alert('Validacao', 'Informe o nome do cliente.');
       return;
     }
-    if (!validarEmail(email)) {
-      Alert.alert('Validacao', 'Email invalido.');
+    if (!telefoneNormalizado && !emailNormalizado) {
+      Alert.alert('Validacao', 'Informe telefone ou email.');
       return;
     }
-
-    const telefoneNormalizado = telefone.trim() || null;
-    const emailNormalizado = email.trim() || null;
+    if (telefoneNormalizado && !isValidPhoneBR(telefoneNormalizado)) {
+      Alert.alert('Validacao', 'Telefone invalido. Use DDD + numero.');
+      return;
+    }
+    if (emailNormalizado && !isValidEmail(emailNormalizado)) {
+      Alert.alert('Validacao', 'Email invalido. Ex: nome@email.com');
+      return;
+    }
 
     if (editandoId) {
       dispatch(
         updateClienteLocal({
           id: editandoId,
-          usuario_id: activeUserId ?? 1,
+          usuario_id: activeUserId,
           nome: nomeNormalizado,
-          telefone: telefoneNormalizado,
-          email: emailNormalizado,
+          telefone: telefoneNormalizado ? telefoneNormalizado.trim() : null,
+          email: emailNormalizado || null,
         })
       );
 
@@ -79,13 +93,13 @@ export default function Clientes() {
           entity: 'clientes',
           endpoint: '/clientes/update.php',
           method: 'PUT',
-          usuario_id: activeUserId ?? 1,
+          usuario_id: activeUserId,
           payload: {
             id: editandoId,
-            usuario_id: activeUserId ?? 1,
+            usuario_id: activeUserId,
             nome: nomeNormalizado,
-            telefone: telefoneNormalizado,
-            email: emailNormalizado,
+            telefone: telefoneNormalizado ? telefoneNormalizado.trim() : null,
+            email: emailNormalizado || null,
           },
         })
       );
@@ -98,10 +112,10 @@ export default function Clientes() {
     dispatch(
       addClienteLocal({
         id: tempId,
-        usuario_id: activeUserId ?? 1,
+        usuario_id: activeUserId,
         nome: nomeNormalizado,
-        telefone: telefoneNormalizado,
-        email: emailNormalizado,
+        telefone: telefoneNormalizado ? telefoneNormalizado.trim() : null,
+        email: emailNormalizado || null,
       })
     );
 
@@ -110,12 +124,13 @@ export default function Clientes() {
         entity: 'clientes',
         endpoint: '/clientes/create.php',
         method: 'POST',
-        usuario_id: activeUserId ?? 1,
+        usuario_id: activeUserId,
         payload: {
-          usuario_id: activeUserId ?? 1,
+          local_id: tempId,
+          usuario_id: activeUserId,
           nome: nomeNormalizado,
-          telefone: telefoneNormalizado,
-          email: emailNormalizado,
+          telefone: telefoneNormalizado ? telefoneNormalizado.trim() : null,
+          email: emailNormalizado || null,
         },
       })
     );
@@ -136,14 +151,19 @@ export default function Clientes() {
   }
 
   function excluirCliente(id: number) {
-    dispatch(removeClienteLocal({ id, usuario_id: activeUserId ?? 1 }));
+    if (!activeUserId) {
+      Alert.alert('Sessao', 'Sessao invalida. Faca login novamente.');
+      return;
+    }
+
+    dispatch(removeClienteLocal({ id, usuario_id: activeUserId }));
     dispatch(
       enqueueSyncItem({
         entity: 'clientes',
         endpoint: '/clientes/delete.php',
         method: 'DELETE',
-        usuario_id: activeUserId ?? 1,
-        payload: { id, usuario_id: activeUserId ?? 1 },
+        usuario_id: activeUserId,
+        payload: { id, usuario_id: activeUserId },
       })
     );
   }
@@ -157,15 +177,15 @@ export default function Clientes() {
         <TextInput value={nome} onChangeText={setNome} placeholder="Nome" style={styles.input} />
         <TextInput
           value={telefone}
-          onChangeText={setTelefone}
-          placeholder="Telefone"
+          onChangeText={(value) => setTelefone(maskPhoneBR(value))}
+          placeholder="Telefone (ou email)"
           keyboardType="phone-pad"
           style={styles.input}
         />
         <TextInput
           value={email}
-          onChangeText={setEmail}
-          placeholder="Email"
+          onChangeText={(value) => setEmail(normalizeEmail(value))}
+          placeholder="Email (ou telefone)"
           keyboardType="email-address"
           autoCapitalize="none"
           style={styles.input}

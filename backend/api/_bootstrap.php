@@ -154,3 +154,35 @@ function column_exists(string $tableName, string $columnName): bool
     $stmt->execute([':column_name' => $columnName]);
     return (bool) $stmt->fetchColumn();
 }
+
+function sync_log(string $endpoint, array $payload = [], string $stage = 'request'): void
+{
+    try {
+        $safePayload = $payload;
+        foreach (['senha', 'senha_atual', 'nova_senha', 'senha_hash', 'token'] as $field) {
+            if (array_key_exists($field, $safePayload)) {
+                $safePayload[$field] = '***';
+            }
+        }
+
+        $line = sprintf(
+            '%s [%s] %s method=%s user=%s payload=%s',
+            date('Y-m-d H:i:s'),
+            $stage,
+            $endpoint,
+            $_SERVER['REQUEST_METHOD'] ?? '-',
+            (string) ($safePayload['usuario_id'] ?? '-'),
+            json_encode($safePayload, JSON_UNESCAPED_UNICODE)
+        );
+
+        error_log($line);
+
+        $logDir = dirname(__DIR__) . '/logs';
+        if (!is_dir($logDir)) {
+            @mkdir($logDir, 0775, true);
+        }
+        @file_put_contents($logDir . '/sync.log', $line . PHP_EOL, FILE_APPEND);
+    } catch (Throwable $e) {
+        // Nao interrompe fluxo de API em caso de falha de log.
+    }
+}

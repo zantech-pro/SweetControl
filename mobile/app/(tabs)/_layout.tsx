@@ -1,8 +1,8 @@
 import React from 'react';
 import { Redirect, Tabs, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useDispatch, useSelector, useStore } from 'react-redux';
 import { AppDispatch, RootState } from '../../src/store';
 import { logout } from '../../src/store/slices/sessionSlice';
 import { setTheme } from '../../src/store/slices/themeSlice';
@@ -12,6 +12,7 @@ import { clearFailedSyncItems } from '../../src/store/slices/syncQueueSlice';
 
 export default function TabsLayout() {
   const dispatch = useDispatch<AppDispatch>();
+  const store = useStore<RootState>();
   const themeName = useSelector((state: RootState) => state.theme.currentTheme);
   const isAuthenticated = useSelector((state: RootState) => state.session.isAuthenticated);
   const activeUserId = useSelector((state: RootState) => state.session.activeUserId);
@@ -39,7 +40,19 @@ export default function TabsLayout() {
               </Text>
               <TouchableOpacity
                 style={[styles.menuBtn, { backgroundColor: '#1e88e5' }]}
-                onPress={() => runSyncCycle(dispatch)}
+                onPress={async () => {
+                  const result = await runSyncCycle(dispatch, () => store.getState());
+                  const payload = (result as { payload?: { successCount?: number; failedCount?: number } } | null)?.payload;
+                  if (payload && typeof payload.successCount === 'number') {
+                    Alert.alert(
+                      'Sincronizacao',
+                      `Enviados: ${payload.successCount} | Falhas: ${payload.failedCount ?? 0}`
+                    );
+                    return;
+                  }
+
+                  Alert.alert('Sincronizacao', 'Nenhum item processado nesta tentativa.');
+                }}
               >
                 <Text style={styles.btnText}>Sincronizar Agora</Text>
               </TouchableOpacity>

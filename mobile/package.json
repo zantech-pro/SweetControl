@@ -5,7 +5,9 @@
   "scripts": {
     "start": "expo start",
     "start:clean": "expo start -c",
-    "start:win-safe": "set NODE_OPTIONS=--max-old-space-size=4096 && expo start -c",
+    "start:win-safe": "set NODE_OPTIONS=--max-old-space-size=8192 && expo start -c --max-workers 1",
+    "android:win-safe": "set NODE_OPTIONS=--max-old-space-size=8192 && expo start -c --max-workers 1 --android",
+    "web:win-safe": "set NODE_OPTIONS=--max-old-space-size=8192 && expo start -c --max-workers 1 --web",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
@@ -16,6 +18,7 @@
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-community/datetimepicker": "8.4.4",
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",
     "@react-navigation/native": "^7.1.33",

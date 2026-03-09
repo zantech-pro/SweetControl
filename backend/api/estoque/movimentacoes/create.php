@@ -15,6 +15,17 @@ $referenciaTipo = to_nullable_string($input['referencia_tipo'] ?? null);
 $referenciaId = to_nullable_int($input['referencia_id'] ?? null);
 
 $pdo = db();
+
+if ($quantidade <= 0) {
+    json_response(422, ['success' => false, 'error' => 'Quantidade invalida']);
+}
+
+$produtoStmt = $pdo->prepare('SELECT id FROM produtos WHERE id = :id LIMIT 1');
+$produtoStmt->execute([':id' => $produtoId]);
+if (!$produtoStmt->fetchColumn()) {
+    json_response(422, ['success' => false, 'error' => "Produto nao encontrado para produto_id={$produtoId}"]);
+}
+
 $pdo->beginTransaction();
 try {
     $stmt = $pdo->prepare(
@@ -47,4 +58,3 @@ try {
     $pdo->rollBack();
     json_response(500, ['success' => false, 'error' => 'Falha ao registrar movimentacao', 'details' => $e->getMessage()]);
 }
-
