@@ -6,8 +6,8 @@
 3. Garanta que o root da API publique a pasta `backend/api`.
 
 ## 2) Banco de dados
-1. Execute `docs/modelagem.sql`.
-2. Execute `database/migracao_backend_v2.sql` (campos e tabelas extras do app atual).
+1. Execute `docs/dabase.sql`.
+
 
 ## 3) Endpoints implementados
 
