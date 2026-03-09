@@ -25,7 +25,7 @@ O design do SweetControl foi pensado para ser limpo e intuitivo, utilizando a pa
 | ![Recibo](./docs/recibo.jpeg) | ![marketing](./docs/marketing.jpeg) | ![Clientes](./docs/bi.jpeg) |
 | *Apos registrar venda, acione borão compartilhar recibo.* | *Tempalte para ser compartilhado no whatsapp.* | *Controle Financeiro (BI).* |
 
-| Menu de ConfiguraçõesTela de Recebibo na frente de caixa |
+| Menu de Configurações |
 | :---: | 
 | ![Config](./docs/menu_config.jpeg) |
 | *Ajustar Tema, sicronizar manualmente e acompanhar sicronizações em andamento | 
