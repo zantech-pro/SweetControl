@@ -9,8 +9,8 @@
     "android:win-safe": "set NODE_OPTIONS=--max-old-space-size=8192 && expo start -c --max-workers 1 --android",
     "web:win-safe": "set NODE_OPTIONS=--max-old-space-size=8192 && expo start -c --max-workers 1 --web",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
     "test": "jest"

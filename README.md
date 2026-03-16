@@ -4,6 +4,64 @@ O **SweetControl** é uma plataforma integrada para microempreendedores do ramo 
 
 Atenção!!! A grade expertise do **offline-first** neste projeto e que o usuario depois que logou pela primeira vez, **mesmo que fique sem internet podera desfrutar de todas as funcionalidades do App** indepednete da cloud (Backend na hospedagem).
 
+## 📱 Interface do Usuário (UI)
+
+O design do SweetControl foi pensado para ser limpo e intuitivo, utilizando a paleta de cores institucional (multiplos temas) para transmitir confiança e organização.
+
+### 📸 Demonstração das Telas
+
+| Login | Criar Conta | Tela Pos Login Caixa |
+| :---: | :---: | :---: |
+| ![Login](./docs/login.jpeg) | ![CriarConta](./docs/criar_conta.jpeg) | ![Caixa](./docs/caixa.jpeg) |
+| *Visão das contas registrada no device.* | *Criar Conta do zero.* | *tela inicial Frente de Caixa.* |
+
+| Cadastro de Categoria | Cadastrar Produtos | Cadastrar Clientes (opcional) |
+| :---: | :---: | :---: |
+| ![Categoria](./docs/categorias.jpeg) | ![Castrar Produtos](./docs/produtos.jpeg) | ![Clientes](./docs/clientes.jpeg) |
+| *Area de Cadastro das categorias.* | *Casdastro dos produtos.* | *Registros dos clientes para colocoar nos recebos.* |
+
+| Tela de Recebibo na frente de caixa | Markenting | Financeiro (BI) |
+| :---: | :---: | :---: |
+| ![Recibo](./docs/recibo.jpeg) | ![marketing](./docs/marketing.jpeg) | ![Clientes](./docs/bi.jpeg) |
+| *Apos registrar venda, acione borão compartilhar recibo.* | *Tempalte para ser compartilhado no whatsapp.* | *Controle Financeiro (BI).* |
+
+| Menu de Configurações |
+| :---: | 
+| ![Config](./docs/menu_config.jpeg) |
+| *Ajustar Tema, sicronizar manualmente e acompanhar sicronizações em andamento | 
+
+> **Nota:** As imagens acima são ilustrativas do ambiente de homologação. O layout adapta-se automaticamente a diferentes tamanhos de tela de dispositivos Android.
+
+## 📲 Download e Instalação (Mobile)
+
+Para testar a solução em ambiente real ou emulativo, os artefatos nativos foram compilados e estão disponíveis nos links abaixo.
+
+### 📥 Links de Acesso
+
+| Plataforma | Artefato | Destino | Link de Download |
+| :--- | :--- | :--- | :--- |
+| **Android** | `.apk` | Smartphone Real | [**📥 Baixar SweetControl.apk**](https://expo.dev/artifacts/eas/s2ZqZfGDPu9E6pasScGg8P.apk) |
+| **iOS** | `.tar.gz` | Simulador macOS | [**📥 Baixar SweetControl.app**](https://expo.dev/artifacts/eas/6NVvrdiqg5roiD8nhr7tCe.tar.gz) |
+
+---
+
+### 🛠️ Instruções de Instalação
+
+#### Para Android (Ficheiro APK):
+1. Aceda ao link acima através do seu smartphone Android.
+2. Após o download, abra o ficheiro `.apk`.
+3. Autorize a "Instalação de fontes desconhecidas" nas definições do sistema.
+4. O **SweetControl** será instalado na sua lista de aplicações.
+
+#### Para iOS (Simulador):
+1. Descarregue o ficheiro `.tar.gz` num computador com macOS.
+2. Descompacte o ficheiro para obter o executável `.app`.
+3. Abra o **Simulator** do Xcode.
+4. Arraste e solte o ficheiro `.app` para dentro da janela do simulador para instalar.
+
+---
+
+> **Nota de Sincronização:** Ambas as versões estão configuradas para comunicar com o servidor **HostGator**. A lógica de persistência local (Redux Persist) permite que os dados sejam visualizados mesmo sem conexão, sincronizando automaticamente ao detetar rede.
 ## 🏗️ Estrutura do Projeto
 
 Abaixo está a organização dos principais diretórios do ecossistema, mapeados para facilitar a manutenção e o deploy:
