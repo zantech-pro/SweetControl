@@ -1,4 +1,4 @@
-﻿{
+{
   "expo": {
     "name": "SweetControl",
     "slug": "sweetcontrol",
@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.zantechpro.mobile",
+      "bundleIdentifier": "com.zantechpro.sweetcontrol",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "Precisamos da camera para permitir foto de perfil.",
@@ -24,11 +24,12 @@
     "android": {
       "backgroundColor": "#E6F4FE",
       "edgeToEdgeEnabled": true,
-      "package": "com.zantechpro.mobile",
+      "package": "com.zantechpro.sweetcontrol",
       "permissions": [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "READ_MEDIA_IMAGES"
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.RECORD_AUDIO"
       ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/android-adaptive-foreground.png",
@@ -45,8 +46,9 @@
       "expo-image-picker"
     ],
     "extra": {
+      "router": {},
       "eas": {
-        "projectId": "4b76ac42-bdb4-46e2-ba4b-b76ee1d5820e"
+        "projectId": "cab4e083-2e82-4ac2-9f7f-166e57cef349"
       }
     }
   }
