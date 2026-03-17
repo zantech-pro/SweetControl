@@ -29,6 +29,15 @@ if ($dataValidade === null || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $dataValidade
 
 $hasDataValidade = column_exists('produtos', 'data_validade');
 $hasPrecoCusto = column_exists('produtos', 'preco_custo');
+$hasFornecedor = column_exists('produtos', 'fornecedor_id');
+
+if ($hasFornecedor && $fornecedorId !== null) {
+    $checkFornecedor = db()->prepare('SELECT id FROM fornecedores WHERE id = :id LIMIT 1');
+    $checkFornecedor->execute([':id' => $fornecedorId]);
+    if (!$checkFornecedor->fetchColumn()) {
+        $fornecedorId = null;
+    }
+}
 
 $setParts = [
     'nome = :nome',
@@ -46,26 +55,30 @@ if ($hasDataValidade) {
 }
 $setParts[] = 'atualizado_em = NOW()';
 
-$stmt = db()->prepare(
-    'UPDATE produtos SET ' . implode(', ', $setParts) . ' WHERE id = :id AND usuario_id = :usuario_id'
-);
-$params = [
-    ':id' => $id,
-    ':usuario_id' => $usuarioId,
-    ':nome' => $nome,
-    ':categoria_id' => $categoriaId,
-    ':fornecedor_id' => $fornecedorId,
-    ':preco_venda' => $precoVenda,
-    ':quantidade_estoque' => $quantidadeEstoque,
-    ':estoque_minimo' => $estoqueMinimo,
-];
-if ($hasPrecoCusto) {
-    $params[':preco_custo'] = $precoCusto;
-}
-if ($hasDataValidade) {
-    $params[':data_validade'] = $dataValidade;
-}
+try {
+    $stmt = db()->prepare(
+        'UPDATE produtos SET ' . implode(', ', $setParts) . ' WHERE id = :id AND usuario_id = :usuario_id'
+    );
+    $params = [
+        ':id' => $id,
+        ':usuario_id' => $usuarioId,
+        ':nome' => $nome,
+        ':categoria_id' => $categoriaId,
+        ':fornecedor_id' => $fornecedorId,
+        ':preco_venda' => $precoVenda,
+        ':quantidade_estoque' => $quantidadeEstoque,
+        ':estoque_minimo' => $estoqueMinimo,
+    ];
+    if ($hasPrecoCusto) {
+        $params[':preco_custo'] = $precoCusto;
+    }
+    if ($hasDataValidade) {
+        $params[':data_validade'] = $dataValidade;
+    }
 
-$stmt->execute($params);
+    $stmt->execute($params);
 
-json_response(200, ['success' => true, 'updated' => $stmt->rowCount()]);
+    json_response(200, ['success' => true, 'updated' => $stmt->rowCount()]);
+} catch (Throwable $e) {
+    json_response(500, ['success' => false, 'error' => 'Falha ao atualizar produto', 'details' => $e->getMessage()]);
+}

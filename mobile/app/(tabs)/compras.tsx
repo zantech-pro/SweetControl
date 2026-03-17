@@ -18,7 +18,7 @@ import {
 } from '../../src/store/slices/businessSlice';
 import { adjustProdutoEstoqueLocal } from '../../src/store/slices/referenceDataSlice';
 import { enqueueSyncItem } from '../../src/store/slices/syncQueueSlice';
-import { formatCurrencyBRL } from '../../src/utils/formatters';
+import { formatCurrencyBRL, maskCurrencyInputBRL, parseCurrencyInputBRL } from '../../src/utils/formatters';
 import { ui } from '../../src/ui/ui';
 
 type StatusCompra = 'pendente' | 'recebido';
@@ -73,7 +73,7 @@ export default function Compras() {
 
   const totalPreview = useMemo(() => {
     const qtd = Number(quantidade.replace(',', '.'));
-    const custo = Number(custoUnitario.replace(',', '.'));
+    const custo = parseCurrencyInputBRL(custoUnitario);
     if (!Number.isFinite(qtd) || !Number.isFinite(custo)) return 0;
     return qtd * custo;
   }, [quantidade, custoUnitario]);
@@ -140,7 +140,7 @@ export default function Compras() {
       return;
     }
     const qtd = Number(quantidade.replace(',', '.'));
-    const custo = Number(custoUnitario.replace(',', '.'));
+    const custo = parseCurrencyInputBRL(custoUnitario);
     if (!Number.isFinite(qtd) || qtd <= 0 || !Number.isFinite(custo) || custo <= 0) {
       Alert.alert('Compra', 'Informe quantidade e custo validos.');
       return;
@@ -302,7 +302,7 @@ export default function Compras() {
           />
           <TextInput
             value={custoUnitario}
-            onChangeText={setCustoUnitario}
+            onChangeText={(value) => setCustoUnitario(maskCurrencyInputBRL(value))}
             placeholder="Custo unitario"
             placeholderTextColor="#8a8a8a"
             keyboardType="decimal-pad"

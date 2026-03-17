@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+﻿import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export type MetodoPagamento = 'pix' | 'dinheiro' | 'cartao' | 'transferencia';
 
@@ -189,12 +189,18 @@ export const businessSlice = createSlice({
       pedido.status = action.payload.status;
     },
     addCompraLocal: (state, action: PayloadAction<Compra>) => {
+      if (!state.compras) {
+        state.compras = [];
+      }
       state.compras.unshift(action.payload);
     },
     updateCompraStatusLocal: (
       state,
       action: PayloadAction<{ id: number; usuario_id: number; status: Compra['status'] }>
     ) => {
+      if (!state.compras) {
+        state.compras = [];
+      }
       const compra = state.compras.find(
         (item) =>
           item.id === action.payload.id && item.usuario_id === action.payload.usuario_id
@@ -220,3 +226,4 @@ export const {
 } = businessSlice.actions;
 
 export default businessSlice.reducer;
+
