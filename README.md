@@ -185,6 +185,15 @@ Projeto desenvolvido como parte das Atividades de Extensão Universitária.
 * **Teste de hipótese**: Compara médias mensais recentes e anteriores.
 * **Relatório em PDF**: Geração de relatório completo direto no app.
 
+### 📸 Demonstração das Telas
+
+| Analise Quantificativa & Lucro Real | Produtos Mais Vendidos & Regressão Linear | Probabilidade & Variavei Aleatorias e Continuas & Hipotese |
+| :---: | :---: | :---: |
+| ![AnaliseQtd](./docs/BI_part1.jpeg) | ![CriarConta](./docs/BI_part2.jpeg) | ![Caixa](./docs/BI_part3.jpeg |
+| *Cálculo cruzando custo e preço de venda.* | *Previsão de compras com regressão linear.* | *Gráficos de distribuição e tickets.* |
+
+> **Nota:** As imagens acima são ilustrativas do ambiente de homologação. O layout adapta-se automaticamente a diferentes tamanhos de tela de dispositivos Android.
+
 ### 🎨 UI/UX e Usabilidade
 * **Design system mobile**: Padroniza cards, inputs, botões e tipografia.
 * **Layout responsivo**: Ajustes para telas 360–420px.
