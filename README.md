@@ -40,7 +40,7 @@ Para testar a solução em ambiente real ou emulativo, os artefatos nativos fora
 
 | Plataforma | Artefato | Destino | Link de Download |
 | :--- | :--- | :--- | :--- |
-| **Android** | `.apk` | Smartphone Real | [**📥 Baixar SweetControl.apk**](https://expo.dev/artifacts/eas/s2ZqZfGDPu9E6pasScGg8P.apk) |
+| **Android** | `.apk` | Smartphone Real | [**📥 Baixar SweetControl.apk**](https://expo.dev/artifacts/eas/kvLxSTVkYAPGdFfuD8wVv9.apk) |
 | **iOS** | `.tar.gz` | Simulador macOS | [**📥 Baixar SweetControl.app**](https://expo.dev/artifacts/eas/6NVvrdiqg5roiD8nhr7tCe.tar.gz) |
 
 ---
