@@ -75,6 +75,21 @@ export type PedidoOnline = {
   criado_em: string;
 };
 
+export type Compra = {
+  id: number;
+  usuario_id: number;
+  fornecedor_id: number;
+  fornecedor_nome: string;
+  produto_id: number;
+  produto_nome: string;
+  quantidade: number;
+  custo_unitario: number;
+  subtotal: number;
+  status: 'pendente' | 'recebido';
+  data_compra: string;
+  numero_nota: string | null;
+};
+
 type BusinessState = {
   vendas: Venda[];
   movimentacoesEstoque: MovimentacaoEstoque[];
@@ -82,6 +97,7 @@ type BusinessState = {
   marketingTemplates: MarketingTemplate[];
   crmRegistros: CrmRegistro[];
   pedidosOnline: PedidoOnline[];
+  compras: Compra[];
 };
 
 const initialState: BusinessState = {
@@ -106,6 +122,7 @@ const initialState: BusinessState = {
   ],
   crmRegistros: [],
   pedidosOnline: [],
+  compras: [],
 };
 
 export const businessSlice = createSlice({
@@ -171,6 +188,20 @@ export const businessSlice = createSlice({
       if (!pedido) return;
       pedido.status = action.payload.status;
     },
+    addCompraLocal: (state, action: PayloadAction<Compra>) => {
+      state.compras.unshift(action.payload);
+    },
+    updateCompraStatusLocal: (
+      state,
+      action: PayloadAction<{ id: number; usuario_id: number; status: Compra['status'] }>
+    ) => {
+      const compra = state.compras.find(
+        (item) =>
+          item.id === action.payload.id && item.usuario_id === action.payload.usuario_id
+      );
+      if (!compra) return;
+      compra.status = action.payload.status;
+    },
   },
 });
 
@@ -184,6 +215,8 @@ export const {
   addCrmRegistroLocal,
   addPedidoOnlineLocal,
   updatePedidoOnlineStatusLocal,
+  addCompraLocal,
+  updateCompraStatusLocal,
 } = businessSlice.actions;
 
 export default businessSlice.reducer;

@@ -23,6 +23,7 @@ import {
   maskPhoneBR,
   normalizeEmail,
 } from '../../src/utils/formatters';
+import { ui } from '../../src/ui/ui';
 
 export default function Fornecedores() {
   const dispatch = useDispatch<AppDispatch>();
@@ -40,11 +41,18 @@ export default function Fornecedores() {
   const [prazoEntrega, setPrazoEntrega] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [editandoId, setEditandoId] = useState<number | null>(null);
+  const [busca, setBusca] = useState('');
+  const [formVisivel, setFormVisivel] = useState(false);
 
   const tituloFormulario = useMemo(
     () => (editandoId ? 'Editar fornecedor' : 'Novo fornecedor'),
     [editandoId]
   );
+  const fornecedoresFiltrados = useMemo(() => {
+    const term = busca.trim().toLowerCase();
+    if (!term) return fornecedores;
+    return fornecedores.filter((item) => item.nome.toLowerCase().includes(term));
+  }, [fornecedores, busca]);
 
   function resetForm() {
     setNome('');
@@ -54,6 +62,7 @@ export default function Fornecedores() {
     setPrazoEntrega('');
     setObservacoes('');
     setEditandoId(null);
+    setFormVisivel(false);
   }
 
   function salvarFornecedor() {
@@ -167,6 +176,7 @@ export default function Fornecedores() {
     fornecedorPrazo?: number | null,
     fornecedorObs?: string | null
   ) {
+    setFormVisivel(true);
     setEditandoId(id);
     setNome(fornecedorNome);
     setContato(fornecedorContato ?? '');
@@ -195,64 +205,102 @@ export default function Fornecedores() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: activeTheme.background }]}>
-      <Text style={[styles.title, { color: activeTheme.text }]}>Fornecedores</Text>
+    <View style={[ui.screen, { backgroundColor: activeTheme.background }]}>
+      <Text style={[ui.title, { color: activeTheme.text }]}>Fornecedores</Text>
 
-      <View style={[styles.formCard, { backgroundColor: activeTheme.card }]}>
-        <Text style={styles.formTitle}>{tituloFormulario}</Text>
-        <TextInput value={nome} onChangeText={setNome} placeholder="Nome" style={styles.input} />
-        <TextInput value={contato} onChangeText={setContato} placeholder="Contato" style={styles.input} />
-        <TextInput
-          value={telefone}
-          onChangeText={(value) => setTelefone(maskPhoneBR(value))}
-          placeholder="Telefone"
-          keyboardType="phone-pad"
-          style={styles.input}
-        />
-        <TextInput
-          value={email}
-          onChangeText={(value) => setEmail(normalizeEmail(value))}
-          placeholder="Email"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          style={styles.input}
-        />
-        <TextInput
-          value={prazoEntrega}
-          onChangeText={setPrazoEntrega}
-          placeholder="Prazo entrega (dias)"
-          keyboardType="number-pad"
-          style={styles.input}
-        />
-        <TextInput
-          value={observacoes}
-          onChangeText={setObservacoes}
-          placeholder="Observacoes"
-          style={[styles.input, styles.textArea]}
-          multiline
-        />
-
+      <View style={styles.actionsRow}>
         <TouchableOpacity
-          style={[styles.primaryBtn, { backgroundColor: activeTheme.primary }]}
-          onPress={salvarFornecedor}
+          style={[ui.primaryBtn, { backgroundColor: activeTheme.primary }]}
+          onPress={() => {
+            setFormVisivel((prev) => !prev);
+            if (!formVisivel) setEditandoId(null);
+          }}
         >
-          <Text style={styles.primaryBtnText}>{editandoId ? 'Atualizar' : 'Salvar'}</Text>
+          <Text style={ui.primaryText}>{formVisivel ? 'Fechar formulario' : 'Novo fornecedor'}</Text>
         </TouchableOpacity>
-
-        {editandoId ? (
-          <TouchableOpacity style={styles.secondaryBtn} onPress={resetForm}>
-            <Text style={styles.secondaryBtnText}>Cancelar edicao</Text>
-          </TouchableOpacity>
-        ) : null}
       </View>
 
+      {formVisivel ? (
+        <View style={[ui.card, styles.formCard]}>
+          <Text style={ui.sectionTitle}>{tituloFormulario}</Text>
+          <TextInput
+            value={nome}
+            onChangeText={setNome}
+            placeholder="Nome"
+            placeholderTextColor="#8a8a8a"
+            style={ui.input}
+          />
+          <TextInput
+            value={contato}
+            onChangeText={setContato}
+            placeholder="Contato"
+            placeholderTextColor="#8a8a8a"
+            style={ui.input}
+          />
+          <TextInput
+            value={telefone}
+            onChangeText={(value) => setTelefone(maskPhoneBR(value))}
+            placeholder="Telefone"
+            placeholderTextColor="#8a8a8a"
+            keyboardType="phone-pad"
+            style={ui.input}
+          />
+          <TextInput
+            value={email}
+            onChangeText={(value) => setEmail(normalizeEmail(value))}
+            placeholder="Email"
+            placeholderTextColor="#8a8a8a"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            style={ui.input}
+          />
+          <TextInput
+            value={prazoEntrega}
+            onChangeText={setPrazoEntrega}
+            placeholder="Prazo entrega (dias)"
+            placeholderTextColor="#8a8a8a"
+            keyboardType="number-pad"
+            style={ui.input}
+          />
+          <TextInput
+            value={observacoes}
+            onChangeText={setObservacoes}
+            placeholder="Observacoes"
+            placeholderTextColor="#8a8a8a"
+            style={[ui.input, styles.textArea]}
+            multiline
+          />
+
+          <TouchableOpacity
+            style={[ui.primaryBtn, { backgroundColor: activeTheme.primary }]}
+            onPress={salvarFornecedor}
+          >
+            <Text style={ui.primaryText}>{editandoId ? 'Atualizar' : 'Salvar'}</Text>
+          </TouchableOpacity>
+
+          {editandoId ? (
+            <TouchableOpacity style={styles.secondaryBtn} onPress={resetForm}>
+              <Text style={styles.secondaryBtnText}>Cancelar edicao</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      ) : null}
+
+      <TextInput
+        value={busca}
+        onChangeText={setBusca}
+        placeholder="Pesquisar fornecedor"
+        placeholderTextColor="#8a8a8a"
+        style={ui.searchInput}
+      />
+
       <FlatList
-        data={fornecedores}
+        data={fornecedoresFiltrados}
         keyExtractor={(item) => item.id.toString()}
-        ListEmptyComponent={<Text style={styles.empty}>Nenhum fornecedor cadastrado.</Text>}
+        ListEmptyComponent={<Text style={ui.empty}>Nenhum fornecedor cadastrado.</Text>}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
-          <View style={[styles.itemCard, { backgroundColor: activeTheme.card }]}>
+          <View style={[ui.listCard, styles.itemCard, { backgroundColor: activeTheme.card }]}>
             <View style={styles.itemInfo}>
               <Text style={[styles.itemNome, { color: activeTheme.text }]}>{item.nome}</Text>
               <Text style={styles.itemDescricao}>Contato: {item.contato || '-'}</Text>
@@ -292,30 +340,13 @@ export default function Fornecedores() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  title: { fontSize: 22, fontWeight: '700', marginBottom: 12 },
-  formCard: { borderRadius: 12, padding: 14, marginBottom: 14 },
-  formTitle: { fontSize: 16, fontWeight: '600', marginBottom: 8 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#d9d9d9',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    marginBottom: 10,
-    backgroundColor: '#fff',
-  },
+  actionsRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 10 },
+  formCard: { marginBottom: 14 },
   textArea: { minHeight: 64, textAlignVertical: 'top' },
-  primaryBtn: { paddingVertical: 10, borderRadius: 8, alignItems: 'center' },
-  primaryBtnText: { color: '#fff', fontWeight: '700' },
   secondaryBtn: { marginTop: 10, alignItems: 'center' },
   secondaryBtnText: { color: '#666' },
   listContent: { paddingBottom: 24 },
-  empty: { textAlign: 'center', color: '#777', marginTop: 20 },
   itemCard: {
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

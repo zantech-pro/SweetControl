@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { router } from 'expo-router';
 import { useDispatch } from 'react-redux';
@@ -8,6 +8,7 @@ import { AppDispatch } from '../src/store';
 import { makeOfflinePasswordHash } from '../src/store/passwordHash';
 import { loginSuccessOnline } from '../src/store/slices/sessionSlice';
 import { themes } from '../src/theme/themes';
+import { ui } from '../src/ui/ui';
 
 type RegisterResponse = {
   success: boolean;
@@ -72,34 +73,48 @@ export default function RegisterScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: themes.verde.background }]}>
-      <View style={styles.card}>
-        <Text style={styles.title}>Criar conta</Text>
-        <TextInput value={nome} onChangeText={setNome} placeholder="Nome" style={styles.input} />
+    <View style={[ui.screen, { backgroundColor: themes.verde.background }]}>
+      <View style={ui.card}>
+        <Text style={[ui.title, { color: themes.verde.primary }]}>Criar conta</Text>
+        <Text style={ui.subtitle}>Vamos preparar seu acesso em segundos.</Text>
+        <TextInput
+          value={nome}
+          onChangeText={setNome}
+          placeholder="Nome"
+          placeholderTextColor="#8a8a8a"
+          style={ui.input}
+        />
         <TextInput
           value={email}
           onChangeText={setEmail}
           placeholder="Email"
+          placeholderTextColor="#8a8a8a"
           autoCapitalize="none"
           keyboardType="email-address"
-          style={styles.input}
+          style={ui.input}
         />
         <TextInput
           value={telefone}
           onChangeText={setTelefone}
           placeholder="Telefone (opcional)"
+          placeholderTextColor="#8a8a8a"
           keyboardType="phone-pad"
-          style={styles.input}
+          style={ui.input}
         />
         <TextInput
           value={senha}
           onChangeText={setSenha}
           placeholder="Senha (min 6)"
+          placeholderTextColor="#8a8a8a"
           secureTextEntry
-          style={styles.input}
+          style={ui.input}
         />
-        <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading}>
-          <Text style={styles.buttonText}>{loading ? 'Criando...' : 'Criar conta'}</Text>
+        <TouchableOpacity
+          style={[ui.primaryBtn, { backgroundColor: themes.verde.primary }]}
+          onPress={handleRegister}
+          disabled={loading}
+        >
+          <Text style={ui.primaryText}>{loading ? 'Criando...' : 'Criar conta'}</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => router.replace('/login' as never)}>
           <Text style={styles.link}>Ja tenho conta</Text>
@@ -110,19 +125,5 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, justifyContent: 'center' },
-  card: { backgroundColor: '#fff', borderRadius: 12, padding: 14 },
-  title: { fontSize: 22, fontWeight: '700', color: '#1b5e20', marginBottom: 10 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    marginBottom: 10,
-    backgroundColor: '#fff',
-  },
-  button: { backgroundColor: '#2e7d32', borderRadius: 10, padding: 12, alignItems: 'center' },
-  buttonText: { color: '#fff', fontWeight: '700' },
   link: { color: '#1e88e5', fontWeight: '600', marginTop: 12, textAlign: 'center' },
 });

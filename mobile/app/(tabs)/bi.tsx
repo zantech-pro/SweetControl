@@ -1,12 +1,15 @@
-﻿import React, { useMemo, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
+﻿import React, { useMemo } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSelector } from 'react-redux';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 import Svg, { G, Path } from 'react-native-svg';
-import { AppDispatch, RootState } from '../../src/store';
+import { RootState } from '../../src/store';
 import { ThemeType, themes } from '../../src/theme/themes';
-import { addGastoExtraLocal, MetodoPagamento } from '../../src/store/slices/businessSlice';
+import { MetodoPagamento } from '../../src/store/slices/businessSlice';
 import { enqueueSyncItem } from '../../src/store/slices/syncQueueSlice';
 import { formatCurrencyBRL } from '../../src/utils/formatters';
+import { ui } from '../../src/ui/ui';
 
 function monthKey(isoDate: string) {
   const d = new Date(isoDate);
@@ -109,7 +112,6 @@ function PieChart({
 }
 
 export default function BI() {
-  const dispatch = useDispatch<AppDispatch>();
   const themeName = useSelector((state: RootState) => state.theme.currentTheme);
   const activeUserId = useSelector((state: RootState) => state.session.activeUserId);
   const vendas = useSelector((state: RootState) =>
@@ -122,11 +124,6 @@ export default function BI() {
     state.referenceData.produtos.filter((item) => item.usuario_id === activeUserId)
   );
   const activeTheme = themes[themeName as ThemeType] || themes.verde;
-
-  const [categoria, setCategoria] = useState('Operacional');
-  const [descricao, setDescricao] = useState('');
-  const [valor, setValor] = useState('');
-  const [metodo, setMetodo] = useState<MetodoPagamento>('pix');
 
   const mesAtual = monthKey(new Date().toISOString());
 
@@ -352,58 +349,177 @@ export default function BI() {
     return { status, t, meanA, meanB };
   }, [monthlySeries]);
 
-  function adicionarGasto() {
-    if (!activeUserId) {
-      Alert.alert('Sessao', 'Sessao invalida. Faca login novamente.');
-      return;
-    }
-    const v = Number(valor.replace(',', '.'));
-    if (Number.isNaN(v) || v <= 0) return;
+  async function gerarRelatorioPdf() {
+    try {
+      const linhasLucro = lucroPorProduto.slice(0, 10).map((item) => `
+        <tr>
+          <td>${item.nome}</td>
+          <td style="text-align:right">${item.qtd}</td>
+          <td style="text-align:right">${formatCurrencyBRL(item.receita)}</td>
+          <td style="text-align:right">${formatCurrencyBRL(item.custo)}</td>
+          <td style="text-align:right">${formatCurrencyBRL(item.lucro)}</td>
+        </tr>
+      `).join('');
 
-    dispatch(
-      addGastoExtraLocal({
-        id: -Date.now(),
-        usuario_id: activeUserId,
-        categoria: categoria.trim() || 'Outros',
-        descricao: descricao.trim() || 'Sem descricao',
-        valor: v,
-        metodo_pagamento: metodo,
-        data_gasto: new Date().toISOString(),
-      })
-    );
-    dispatch(
-      enqueueSyncItem({
-        entity: 'gastos_extras',
-        endpoint: '/gastos/create.php',
-        method: 'POST',
-        usuario_id: activeUserId,
-        payload: {
-          usuario_id: activeUserId,
-          categoria: categoria.trim() || 'Outros',
-          descricao: descricao.trim() || 'Sem descricao',
-          valor: v,
-          metodo_pagamento: metodo,
-          data_gasto: new Date().toISOString().slice(0, 10),
-        },
-      })
-    );
-    setDescricao('');
-    setValor('');
+      const linhasPrevisao = previsaoCompras.map((item) => `
+        <tr>
+          <td>${item.nome}</td>
+          <td style="text-align:right">${item.predicted.toFixed(1)}</td>
+          <td style="text-align:right">${item.estoqueAtual}</td>
+          <td style="text-align:right">${item.sugestao}</td>
+          <td style="text-align:right">${(item.risco * 100).toFixed(0)}%</td>
+        </tr>
+      `).join('');
+
+      const linhasProb = metodoProbabilidades.map((item) => `
+        <tr>
+          <td>${item.label}</td>
+          <td style="text-align:right">${item.value}</td>
+          <td style="text-align:right">${item.percent.toFixed(1)}%</td>
+        </tr>
+      `).join('');
+
+      const linhasDiscretas = distribuicaoItens.map((item) => `
+        <tr>
+          <td>${item.label} itens</td>
+          <td style="text-align:right">${item.value}</td>
+          <td style="text-align:right">${item.percent.toFixed(1)}%</td>
+        </tr>
+      `).join('');
+
+      const linhasContinuas = distribuicaoTickets.map((item) => `
+        <tr>
+          <td>${item.label}</td>
+          <td style="text-align:right">${item.value}</td>
+          <td style="text-align:right">${item.percent.toFixed(1)}%</td>
+        </tr>
+      `).join('');
+
+      const html = `
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <style>
+            body { font-family: Arial, sans-serif; padding: 24px; color: #333; }
+            h1 { margin-bottom: 4px; }
+            h2 { margin-top: 24px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+            th, td { border: 1px solid #ddd; padding: 8px; font-size: 12px; }
+            th { background: #f5f5f5; text-align: left; }
+            .metric { margin: 4px 0; }
+          </style>
+        </head>
+        <body>
+          <h1>Relatorio BI - SweetControl</h1>
+          <div class="metric">Mes atual: ${mesAtual}</div>
+          <div class="metric">Faturamento: ${formatCurrencyBRL(faturamento)}</div>
+          <div class="metric">Gastos: ${formatCurrencyBRL(totalGastos)}</div>
+          <div class="metric">Lucro: ${formatCurrencyBRL(lucro)}</div>
+          <div class="metric">Ticket medio: ${formatCurrencyBRL(ticketMedio)}</div>
+
+          <h2>Lucro real por produto</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Produto</th>
+                <th>Qtd</th>
+                <th>Receita</th>
+                <th>Custo</th>
+                <th>Lucro</th>
+              </tr>
+            </thead>
+            <tbody>${linhasLucro || '<tr><td colspan="5">Sem dados</td></tr>'}</tbody>
+          </table>
+
+          <h2>Previsao de compras</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Produto</th>
+                <th>Previsto</th>
+                <th>Estoque</th>
+                <th>Sugestao</th>
+                <th>Risco</th>
+              </tr>
+            </thead>
+            <tbody>${linhasPrevisao || '<tr><td colspan="5">Sem dados</td></tr>'}</tbody>
+          </table>
+
+          <h2>Probabilidades (metodo de pagamento)</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Metodo</th>
+                <th>Qtd</th>
+                <th>%</th>
+              </tr>
+            </thead>
+            <tbody>${linhasProb || '<tr><td colspan="3">Sem dados</td></tr>'}</tbody>
+          </table>
+
+          <h2>Variaveis aleatorias discretas</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Itens por venda</th>
+                <th>Qtd</th>
+                <th>%</th>
+              </tr>
+            </thead>
+            <tbody>${linhasDiscretas || '<tr><td colspan="3">Sem dados</td></tr>'}</tbody>
+          </table>
+
+          <h2>Variaveis aleatorias continuas</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Faixa</th>
+                <th>Qtd</th>
+                <th>%</th>
+              </tr>
+            </thead>
+            <tbody>${linhasContinuas || '<tr><td colspan="3">Sem dados</td></tr>'}</tbody>
+          </table>
+
+          <h2>Teste de hipotese</h2>
+          <div class="metric">H0: medias mensais iguais (ultimos 3 vs 3 anteriores)</div>
+          <div class="metric">t = ${hipoteses.t.toFixed(2)} | ${hipoteses.status}</div>
+          <div class="metric">Media recente: ${formatCurrencyBRL(hipoteses.meanB)} | Media anterior: ${formatCurrencyBRL(hipoteses.meanA)}</div>
+        </body>
+      </html>
+      `;
+
+      const { uri } = await Print.printToFileAsync({ html });
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri);
+      } else {
+        Alert.alert('Relatorio', 'PDF gerado, mas o compartilhamento nao esta disponivel neste dispositivo.');
+      }
+    } catch (_error) {
+      Alert.alert('Relatorio', 'Falha ao gerar o PDF.');
+    }
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: activeTheme.background }]}>
-      <Text style={[styles.title, { color: activeTheme.text }]}>BI & Financeiro</Text>
+    <ScrollView style={[ui.screen, { backgroundColor: activeTheme.background }]}>
+      <Text style={[ui.title, { color: activeTheme.text }]}>BI & Financeiro</Text>
       <Text style={styles.subtitle}>Mes atual: {mesAtual}</Text>
 
-      <View style={[styles.metricsCard, { backgroundColor: activeTheme.card }]}>
+      <View style={[ui.card, styles.metricsCard, { backgroundColor: activeTheme.card }]}>
         <Text style={styles.metric}>Faturamento: {formatCurrencyBRL(faturamento)}</Text>
         <Text style={styles.metric}>Gastos: {formatCurrencyBRL(totalGastos)}</Text>
         <Text style={styles.metric}>Lucro: {formatCurrencyBRL(lucro)}</Text>
         <Text style={styles.metric}>Ticket medio: {formatCurrencyBRL(ticketMedio)}</Text>
       </View>
 
-      <View style={[styles.metricsCard, { backgroundColor: activeTheme.card }]}>
+      <TouchableOpacity
+        style={[ui.primaryBtn, styles.reportButton, { backgroundColor: activeTheme.primary }]}
+        onPress={gerarRelatorioPdf}
+      >
+        <Text style={ui.primaryText}>Gerar relatorio em PDF</Text>
+      </TouchableOpacity>
+
+      <View style={[ui.card, styles.metricsCard, { backgroundColor: activeTheme.card }]}>
         <Text style={styles.section}>Analise de Dados Quantitativos</Text>
         <Text style={styles.small}>Oscilacao Mensal (Vendas x Gastos)</Text>
         <View style={styles.chartRow}>
@@ -452,7 +568,7 @@ export default function BI() {
         </View>
       </View>
 
-      <View style={[styles.metricsCard, { backgroundColor: activeTheme.card }]}>
+      <View style={[ui.card, styles.metricsCard, { backgroundColor: activeTheme.card }]}>
         <Text style={styles.section}>Lucro real por produto</Text>
         {lucroPorProduto.length === 0 ? (
           <Text style={styles.small}>Sem vendas no mes.</Text>
@@ -485,14 +601,14 @@ export default function BI() {
         <Text style={styles.small}>Sem vendas no mes.</Text>
       ) : (
         produtosMaisVendidos.map((item) => (
-          <View key={item[0]} style={[styles.rankCard, { backgroundColor: activeTheme.card }]}>
+          <View key={item[0]} style={[ui.listCard, styles.rankCard, { backgroundColor: activeTheme.card }]}>
             <Text style={{ color: activeTheme.text }}>{item[0]}</Text>
             <Text style={styles.small}>Qtd: {item[1]}</Text>
           </View>
         ))
       )}
 
-      <View style={[styles.metricsCard, { backgroundColor: activeTheme.card }]}>
+      <View style={[ui.card, styles.metricsCard, { backgroundColor: activeTheme.card }]}>
         <Text style={styles.section}>Modelo Basico de Regressao Linear</Text>
         <Text style={styles.small}>Previsao simples de compras (proximo mes)</Text>
         {previsaoCompras.length === 0 ? (
@@ -514,7 +630,7 @@ export default function BI() {
         )}
       </View>
 
-      <View style={[styles.metricsCard, { backgroundColor: activeTheme.card }]}>
+      <View style={[ui.card, styles.metricsCard, { backgroundColor: activeTheme.card }]}>
         <Text style={styles.section}>Probabilidades (metodo de pagamento)</Text>
         <View style={styles.pieRow}>
           <PieChart
@@ -536,7 +652,7 @@ export default function BI() {
         </View>
       </View>
 
-      <View style={[styles.metricsCard, { backgroundColor: activeTheme.card }]}>
+      <View style={[ui.card, styles.metricsCard, { backgroundColor: activeTheme.card }]}>
         <Text style={styles.section}>Variaveis Aleatorias Discretas</Text>
         {distribuicaoItens.map((item) => (
           <View key={item.label} style={styles.barRow}>
@@ -556,7 +672,7 @@ export default function BI() {
         ))}
       </View>
 
-      <View style={[styles.metricsCard, { backgroundColor: activeTheme.card }]}>
+      <View style={[ui.card, styles.metricsCard, { backgroundColor: activeTheme.card }]}>
         <Text style={styles.section}>Variaveis Aleatorias Continuas</Text>
         {distribuicaoTickets.map((item) => (
           <View key={item.label} style={styles.barRow}>
@@ -576,7 +692,7 @@ export default function BI() {
         ))}
       </View>
 
-      <View style={[styles.metricsCard, { backgroundColor: activeTheme.card }]}>
+      <View style={[ui.card, styles.metricsCard, { backgroundColor: activeTheme.card }]}>
         <Text style={styles.section}>Testes de Hipotese</Text>
         <Text style={styles.small}>H0: medias mensais iguais (ultimos 3 vs 3 anteriores)</Text>
         <Text style={styles.small}>t = {hipoteses.t.toFixed(2)} | {hipoteses.status}</Text>
@@ -585,36 +701,16 @@ export default function BI() {
         </Text>
       </View>
 
-      <View style={[styles.metricsCard, { backgroundColor: activeTheme.card }]}>
-        <Text style={styles.section}>Lancar gasto extra</Text>
-        <TextInput value={categoria} onChangeText={setCategoria} placeholder="Categoria" style={styles.input} />
-        <TextInput value={descricao} onChangeText={setDescricao} placeholder="Descricao" style={styles.input} />
-        <TextInput value={valor} onChangeText={setValor} placeholder="Valor" keyboardType="decimal-pad" style={styles.input} />
-        <View style={styles.row}>
-          {(['pix', 'dinheiro', 'cartao', 'transferencia'] as MetodoPagamento[]).map((item) => (
-            <TouchableOpacity
-              key={item}
-              style={[styles.chip, { borderColor: metodo === item ? activeTheme.primary : '#ccc' }]}
-              onPress={() => setMetodo(item)}
-            >
-              <Text style={{ color: metodo === item ? activeTheme.primary : '#555' }}>{item}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <TouchableOpacity style={[styles.button, { backgroundColor: activeTheme.primary }]} onPress={adicionarGasto}>
-          <Text style={styles.buttonText}>Salvar gasto</Text>
-        </TouchableOpacity>
-      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  title: { fontSize: 22, fontWeight: '700', marginBottom: 4 },
+  titleSpacer: { marginBottom: 4 },
   subtitle: { color: '#666', marginBottom: 8 },
-  metricsCard: { borderRadius: 12, padding: 12, marginBottom: 10 },
+  metricsCard: { marginBottom: 10 },
   metric: { color: '#333', fontWeight: '700', marginBottom: 4 },
+  reportButton: { marginBottom: 12 },
   section: { marginTop: 8, marginBottom: 6, fontWeight: '700', color: '#444' },
   chartRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
   chartCol: { width: '15%', alignItems: 'center' },
@@ -632,7 +728,7 @@ const styles = StyleSheet.create({
   legendRow: { flexDirection: 'row', marginTop: 10, gap: 12 },
   legendItem: { flexDirection: 'row', alignItems: 'center' },
   legendDot: { width: 10, height: 10, borderRadius: 5, marginRight: 6 },
-  rankCard: { borderRadius: 10, padding: 10, marginBottom: 8 },
+  rankCard: { marginBottom: 8 },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
@@ -667,4 +763,7 @@ const styles = StyleSheet.create({
   pieLegend: { flex: 1 },
   piePlaceholder: { alignItems: 'center', justifyContent: 'center', borderRadius: 999, backgroundColor: '#f0f0f0' },
 });
+
+
+
 

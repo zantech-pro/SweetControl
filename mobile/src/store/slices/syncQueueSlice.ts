@@ -9,6 +9,8 @@ type SyncEntity =
   | 'produtos'
   | 'clientes'
   | 'fornecedores'
+  | 'usuarios'
+  | 'compras'
   | 'vendas'
   | 'itens_venda'
   | 'movimentacoes_estoque'
@@ -186,6 +188,8 @@ const priority: Record<string, number> = {
   produtos: 2,
   clientes: 3,
   fornecedores: 4,
+  usuarios: 4,
+  compras: 5,
   vendas: 5,
   itens_venda: 6,
   movimentacoes_estoque: 7,

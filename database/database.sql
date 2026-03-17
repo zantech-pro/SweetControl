@@ -74,7 +74,7 @@ CREATE TABLE `compras_fornecedor` (
   `fornecedor_id` int(11) NOT NULL,
   `numero_nota` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
   `total_compra` decimal(10,2) DEFAULT NULL,
-  `status` enum('pendente','pago') COLLATE utf8_unicode_ci DEFAULT 'pago',
+  `status` enum('pendente','recebido') COLLATE utf8_unicode_ci DEFAULT 'pendente',
   `data_compra` datetime DEFAULT NULL,
   `criado_em` datetime DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -312,6 +312,7 @@ CREATE TABLE `usuarios` (
   `email` varchar(150) COLLATE utf8_unicode_ci NOT NULL,
   `senha_hash` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `telefone` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `avatar_url` text COLLATE utf8_unicode_ci,
   `status` enum('ativo','inativo') COLLATE utf8_unicode_ci DEFAULT 'ativo',
   `ultimo_login` datetime DEFAULT NULL,
   `criado_em` datetime DEFAULT CURRENT_TIMESTAMP,

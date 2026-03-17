@@ -30,8 +30,8 @@ if ($check->fetch()) {
 $senhaHash = password_hash($senha, PASSWORD_DEFAULT);
 
 $stmt = db()->prepare(
-    'INSERT INTO usuarios (nome, email, senha_hash, telefone, status, ultimo_login, criado_em, atualizado_em)
-     VALUES (:nome, :email, :senha_hash, :telefone, :status, NOW(), NOW(), NOW())'
+    'INSERT INTO usuarios (nome, email, senha_hash, telefone, avatar_url, status, ultimo_login, criado_em, atualizado_em)
+     VALUES (:nome, :email, :senha_hash, :telefone, NULL, :status, NOW(), NOW(), NOW())'
 );
 $stmt->execute([
     ':nome' => $nome,
@@ -51,6 +51,6 @@ json_response(201, [
         'id' => $userId,
         'nome' => $nome,
         'email' => $email,
+        'avatar_url' => null,
     ],
 ]);
-

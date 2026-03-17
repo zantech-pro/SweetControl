@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Alert, FlatList, Share, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../../src/store';
@@ -10,6 +10,7 @@ import {
   updateMarketingTemplateLocal,
 } from '../../src/store/slices/businessSlice';
 import { enqueueSyncItem } from '../../src/store/slices/syncQueueSlice';
+import { ui } from '../../src/ui/ui';
 
 export default function Marketing() {
   const dispatch = useDispatch<AppDispatch>();
@@ -30,9 +31,25 @@ export default function Marketing() {
   const [conteudo, setConteudo] = useState('');
   const [tipo, setTipo] = useState<'promocao' | 'whatsapp' | 'oferta'>('promocao');
   const [editandoId, setEditandoId] = useState<number | null>(null);
+  const [templateBusca, setTemplateBusca] = useState('');
+  const [templateFormVisivel, setTemplateFormVisivel] = useState(false);
 
   const [crmClienteId, setCrmClienteId] = useState<number | null>(null);
   const [crmObs, setCrmObs] = useState('');
+  const [crmBusca, setCrmBusca] = useState('');
+  const [crmFormVisivel, setCrmFormVisivel] = useState(false);
+
+  const templatesFiltrados = React.useMemo(() => {
+    const term = templateBusca.trim().toLowerCase();
+    if (!term) return templates;
+    return templates.filter((item) => item.titulo.toLowerCase().includes(term));
+  }, [templates, templateBusca]);
+
+  const clientesFiltrados = React.useMemo(() => {
+    const term = crmBusca.trim().toLowerCase();
+    if (!term) return clientes;
+    return clientes.filter((item) => item.nome.toLowerCase().includes(term));
+  }, [clientes, crmBusca]);
 
   async function compartilharWhatsApp(texto: string) {
     await Share.share({ message: texto });
@@ -43,6 +60,7 @@ export default function Marketing() {
     setConteudo('');
     setTipo('promocao');
     setEditandoId(null);
+    setTemplateFormVisivel(false);
   }
 
   function salvarTemplate() {
@@ -153,41 +171,79 @@ export default function Marketing() {
       })
     );
     setCrmObs('');
+    setCrmFormVisivel(false);
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: activeTheme.background }]}>
-      <Text style={[styles.title, { color: activeTheme.text }]}>Marketing & Precos</Text>
+    <View style={[ui.screen, { backgroundColor: activeTheme.background }]}>
+      <Text style={[ui.title, { color: activeTheme.text }]}>Marketing & Precos</Text>
 
-      <View style={[styles.card, { backgroundColor: activeTheme.card }]}>
-        <Text style={styles.sectionTitle}>Template editavel</Text>
-        <TextInput value={titulo} onChangeText={setTitulo} placeholder="Titulo" style={styles.input} />
-        <TextInput value={conteudo} onChangeText={setConteudo} placeholder="Conteudo" style={[styles.input, { height: 70 }]} multiline />
-        <View style={styles.row}>
-          {(['promocao', 'whatsapp', 'oferta'] as const).map((item) => (
-            <TouchableOpacity
-              key={item}
-              style={[styles.chip, { borderColor: tipo === item ? activeTheme.primary : '#ccc' }]}
-              onPress={() => setTipo(item)}
-            >
-              <Text style={{ color: tipo === item ? activeTheme.primary : '#555' }}>{item}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: activeTheme.primary }]} onPress={salvarTemplate}>
-          <Text style={styles.primaryText}>{editandoId ? 'Atualizar template' : 'Salvar template'}</Text>
+      <View style={styles.actionsRow}>
+        <TouchableOpacity
+          style={[ui.primaryBtn, { backgroundColor: activeTheme.primary }]}
+          onPress={() => {
+            setTemplateFormVisivel((prev) => !prev);
+            if (!templateFormVisivel) setEditandoId(null);
+          }}
+        >
+          <Text style={ui.primaryText}>
+            {templateFormVisivel ? 'Fechar template' : 'Novo template'}
+          </Text>
         </TouchableOpacity>
       </View>
 
+      {templateFormVisivel ? (
+        <View style={[ui.card, styles.card]}>
+          <Text style={ui.sectionTitle}>Template editavel</Text>
+          <TextInput
+            value={titulo}
+            onChangeText={setTitulo}
+            placeholder="Titulo"
+            placeholderTextColor="#8a8a8a"
+            style={ui.input}
+          />
+          <TextInput
+            value={conteudo}
+            onChangeText={setConteudo}
+            placeholder="Conteudo"
+            placeholderTextColor="#8a8a8a"
+            style={[ui.input, { height: 70 }]}
+            multiline
+          />
+          <View style={ui.row}>
+            {(['promocao', 'whatsapp', 'oferta'] as const).map((item) => (
+              <TouchableOpacity
+                key={item}
+                style={[ui.chip, { borderColor: tipo === item ? activeTheme.primary : '#ccc' }]}
+                onPress={() => setTipo(item)}
+              >
+                <Text style={{ color: tipo === item ? activeTheme.primary : '#555' }}>{item}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <TouchableOpacity style={[ui.primaryBtn, { backgroundColor: activeTheme.primary }]} onPress={salvarTemplate}>
+            <Text style={ui.primaryText}>{editandoId ? 'Atualizar template' : 'Salvar template'}</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
+
+      <TextInput
+        value={templateBusca}
+        onChangeText={setTemplateBusca}
+        placeholder="Pesquisar template"
+        placeholderTextColor="#8a8a8a"
+        style={ui.searchInput}
+      />
+
       <FlatList
-        data={templates}
+        data={templatesFiltrados}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ paddingBottom: 14 }}
         renderItem={({ item }) => (
-          <View style={[styles.itemCard, { backgroundColor: activeTheme.card }]}>
+          <View style={[ui.listCard, styles.itemCard, { backgroundColor: activeTheme.card }]}>
             <Text style={[styles.itemTitle, { color: activeTheme.text }]}>{item.titulo}</Text>
             <Text style={styles.itemBody}>{item.conteudo}</Text>
-            <View style={styles.row}>
+            <View style={ui.row}>
               <TouchableOpacity onPress={() => compartilharWhatsApp(item.conteudo)}>
                 <Text style={styles.actionShare}>Compartilhar</Text>
               </TouchableOpacity>
@@ -209,63 +265,74 @@ export default function Marketing() {
         )}
       />
 
-      <View style={[styles.card, { backgroundColor: activeTheme.card }]}>
-        <Text style={styles.sectionTitle}>CRM Clientes</Text>
-        <FlatList
-          horizontal
-          data={clientes}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={{ paddingBottom: 6 }}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[
-                styles.chip,
-                { borderColor: crmClienteId === item.id ? activeTheme.primary : '#ccc' },
-              ]}
-              onPress={() => setCrmClienteId(item.id)}
-            >
-              <Text style={{ color: crmClienteId === item.id ? activeTheme.primary : '#555' }}>{item.nome}</Text>
-            </TouchableOpacity>
-          )}
-        />
-        <TextInput
-          value={crmObs}
-          onChangeText={setCrmObs}
-          placeholder="Observacao de relacionamento"
-          style={styles.input}
-        />
-        <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: activeTheme.primary }]} onPress={salvarCrm}>
-          <Text style={styles.primaryText}>Salvar CRM</Text>
+      <View style={styles.actionsRow}>
+        <TouchableOpacity
+          style={[ui.primaryBtn, { backgroundColor: activeTheme.primary }]}
+          onPress={() => setCrmFormVisivel((prev) => !prev)}
+        >
+          <Text style={ui.primaryText}>
+            {crmFormVisivel ? 'Fechar CRM' : 'Novo registro CRM'}
+          </Text>
         </TouchableOpacity>
-        <Text style={styles.small}>Registros CRM: {crmRegistros.length}</Text>
       </View>
+
+      {crmFormVisivel ? (
+        <View style={[ui.card, styles.card]}>
+          <Text style={ui.sectionTitle}>CRM Clientes</Text>
+          <TextInput
+            value={crmBusca}
+            onChangeText={setCrmBusca}
+            placeholder="Pesquisar cliente"
+            placeholderTextColor="#8a8a8a"
+            style={ui.searchInput}
+          />
+          <FlatList
+            data={clientesFiltrados}
+            keyExtractor={(item) => item.id.toString()}
+            contentContainerStyle={styles.gridList}
+            columnWrapperStyle={styles.gridRow}
+            numColumns={2}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[
+                  ui.chip,
+                  styles.gridItem,
+                  { borderColor: crmClienteId === item.id ? activeTheme.primary : '#ccc' },
+                ]}
+                onPress={() => setCrmClienteId(item.id)}
+              >
+                <Text style={{ color: crmClienteId === item.id ? activeTheme.primary : '#555' }}>{item.nome}</Text>
+              </TouchableOpacity>
+            )}
+          />
+          <TextInput
+            value={crmObs}
+            onChangeText={setCrmObs}
+            placeholder="Observacao de relacionamento"
+            placeholderTextColor="#8a8a8a"
+            style={ui.input}
+          />
+          <TouchableOpacity style={[ui.primaryBtn, { backgroundColor: activeTheme.primary }]} onPress={salvarCrm}>
+            <Text style={ui.primaryText}>Salvar CRM</Text>
+          </TouchableOpacity>
+          <Text style={styles.small}>Registros CRM: {crmRegistros.length}</Text>
+        </View>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  title: { fontSize: 22, fontWeight: '700', marginBottom: 8 },
-  card: { borderRadius: 12, padding: 12, marginBottom: 10 },
-  sectionTitle: { fontWeight: '700', color: '#444', marginBottom: 8 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    marginBottom: 10,
-    backgroundColor: '#fff',
-  },
-  row: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 10, rowGap: 6 },
-  chip: { borderWidth: 1, borderRadius: 16, paddingHorizontal: 10, paddingVertical: 6, marginRight: 8 },
-  primaryBtn: { borderRadius: 10, padding: 10, alignItems: 'center' },
-  primaryText: { color: '#fff', fontWeight: '700' },
-  itemCard: { borderRadius: 12, padding: 12, marginBottom: 8 },
+  actionsRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 10 },
+  card: { marginBottom: 10 },
+  itemCard: {},
   itemTitle: { fontWeight: '700' },
   itemBody: { color: '#666', marginTop: 4, marginBottom: 8 },
   actionShare: { color: '#43a047', fontWeight: '700' },
   actionEdit: { color: '#1e88e5', fontWeight: '700' },
   actionDelete: { color: '#e53935', fontWeight: '700' },
   small: { color: '#666', marginTop: 8 },
+  gridList: { paddingBottom: 6 },
+  gridRow: { gap: 8, paddingBottom: 8 },
+  gridItem: { flex: 1, marginRight: 0 },
 });

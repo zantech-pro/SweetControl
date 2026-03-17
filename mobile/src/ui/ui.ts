@@ -1,0 +1,101 @@
+import { StyleSheet } from 'react-native';
+
+export const ui = StyleSheet.create({
+  screen: {
+    flex: 1,
+    padding: 16,
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#eee',
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '800',
+    marginBottom: 6,
+  },
+  subtitle: {
+    fontSize: 13,
+    color: '#6f6f6f',
+    marginBottom: 10,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 6,
+    color: '#333',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#d8d8d8',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 10,
+    backgroundColor: '#fff',
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 12,
+    backgroundColor: '#fff',
+  },
+  primaryBtn: {
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+  },
+  primaryText: {
+    color: '#fff',
+    fontWeight: '700',
+  },
+  ghostBtn: {
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    backgroundColor: '#fff',
+    alignItems: 'center',
+  },
+  ghostText: {
+    color: '#444',
+    fontWeight: '600',
+  },
+  row: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  chip: {
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  listCard: {
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#eee',
+    backgroundColor: '#fff',
+  },
+  empty: {
+    textAlign: 'center',
+    color: '#777',
+    marginTop: 16,
+  },
+});

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -17,6 +17,7 @@ import {
   updateCategoriaLocal,
 } from '../../src/store/slices/referenceDataSlice';
 import { enqueueSyncItem } from '../../src/store/slices/syncQueueSlice';
+import { ui } from '../../src/ui/ui';
 
 export default function Categorias() {
   const dispatch = useDispatch<AppDispatch>();
@@ -30,16 +31,24 @@ export default function Categorias() {
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
   const [editandoId, setEditandoId] = useState<number | null>(null);
+  const [busca, setBusca] = useState('');
+  const [formVisivel, setFormVisivel] = useState(false);
 
   const tituloFormulario = useMemo(
     () => (editandoId ? 'Editar categoria' : 'Nova categoria'),
     [editandoId]
   );
+  const categoriasFiltradas = useMemo(() => {
+    const term = busca.trim().toLowerCase();
+    if (!term) return categorias;
+    return categorias.filter((item) => item.nome.toLowerCase().includes(term));
+  }, [categorias, busca]);
 
   function resetForm() {
     setNome('');
     setDescricao('');
     setEditandoId(null);
+    setFormVisivel(false);
   }
 
   function salvarCategoria() {
@@ -117,6 +126,7 @@ export default function Categorias() {
   }
 
   function carregarParaEdicao(id: number, categoriaNome: string, categoriaDescricao?: string | null) {
+    setFormVisivel(true);
     setEditandoId(id);
     setNome(categoriaNome);
     setDescricao(categoriaDescricao ?? '');
@@ -141,43 +151,67 @@ export default function Categorias() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: activeTheme.background }]}>
-      <Text style={[styles.title, { color: activeTheme.text }]}>Categorias de Produtos</Text>
+    <View style={[ui.screen, { backgroundColor: activeTheme.background }]}>
+      <Text style={[ui.title, { color: activeTheme.text }]}>Categorias de Produtos</Text>
 
-      <View style={[styles.formCard, { backgroundColor: activeTheme.card }]}>
-        <Text style={styles.formTitle}>{tituloFormulario}</Text>
-        <TextInput
-          value={nome}
-          onChangeText={setNome}
-          placeholder="Nome da categoria"
-          style={styles.input}
-        />
-        <TextInput
-          value={descricao}
-          onChangeText={setDescricao}
-          placeholder="Descricao"
-          style={styles.input}
-        />
+      <View style={styles.actionsRow}>
         <TouchableOpacity
-          style={[styles.primaryBtn, { backgroundColor: activeTheme.primary }]}
-          onPress={salvarCategoria}
+          style={[ui.primaryBtn, { backgroundColor: activeTheme.primary }]}
+          onPress={() => {
+            setFormVisivel((prev) => !prev);
+            if (!formVisivel) setEditandoId(null);
+          }}
         >
-          <Text style={styles.primaryBtnText}>{editandoId ? 'Atualizar' : 'Salvar'}</Text>
+          <Text style={ui.primaryText}>{formVisivel ? 'Fechar formulario' : 'Nova categoria'}</Text>
         </TouchableOpacity>
-        {editandoId ? (
-          <TouchableOpacity style={styles.secondaryBtn} onPress={resetForm}>
-            <Text style={styles.secondaryBtnText}>Cancelar edicao</Text>
-          </TouchableOpacity>
-        ) : null}
       </View>
 
+      {formVisivel ? (
+        <View style={[ui.card, styles.formCard]}>
+          <Text style={ui.sectionTitle}>{tituloFormulario}</Text>
+          <TextInput
+            value={nome}
+            onChangeText={setNome}
+            placeholder="Nome da categoria"
+            placeholderTextColor="#8a8a8a"
+            style={ui.input}
+          />
+          <TextInput
+            value={descricao}
+            onChangeText={setDescricao}
+            placeholder="Descricao"
+            placeholderTextColor="#8a8a8a"
+            style={ui.input}
+          />
+          <TouchableOpacity
+            style={[ui.primaryBtn, { backgroundColor: activeTheme.primary }]}
+            onPress={salvarCategoria}
+          >
+            <Text style={ui.primaryText}>{editandoId ? 'Atualizar' : 'Salvar'}</Text>
+          </TouchableOpacity>
+          {editandoId ? (
+            <TouchableOpacity style={styles.secondaryBtn} onPress={resetForm}>
+              <Text style={styles.secondaryBtnText}>Cancelar edicao</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      ) : null}
+
+      <TextInput
+        value={busca}
+        onChangeText={setBusca}
+        placeholder="Pesquisar categoria"
+        placeholderTextColor="#8a8a8a"
+        style={ui.searchInput}
+      />
+
       <FlatList
-        data={categorias}
+        data={categoriasFiltradas}
         keyExtractor={(item) => item.id.toString()}
-        ListEmptyComponent={<Text style={styles.empty}>Nenhuma categoria cadastrada.</Text>}
+        ListEmptyComponent={<Text style={ui.empty}>Nenhuma categoria cadastrada.</Text>}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
-          <View style={[styles.itemCard, { backgroundColor: activeTheme.card }]}>
+          <View style={[ui.listCard, styles.itemCard, { backgroundColor: activeTheme.card }]}>
             <View style={styles.itemInfo}>
               <Text style={[styles.itemNome, { color: activeTheme.text }]}>{item.nome}</Text>
               <Text style={styles.itemDescricao}>{item.descricao || 'Sem descricao'}</Text>
@@ -201,29 +235,12 @@ export default function Categorias() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  title: { fontSize: 22, fontWeight: '700', marginBottom: 12 },
-  formCard: { borderRadius: 12, padding: 14, marginBottom: 14 },
-  formTitle: { fontSize: 16, fontWeight: '600', marginBottom: 8 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#d9d9d9',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    marginBottom: 10,
-    backgroundColor: '#fff',
-  },
-  primaryBtn: { paddingVertical: 10, borderRadius: 8, alignItems: 'center' },
-  primaryBtnText: { color: '#fff', fontWeight: '700' },
+  actionsRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 10 },
+  formCard: { marginBottom: 14 },
   secondaryBtn: { marginTop: 10, alignItems: 'center' },
   secondaryBtnText: { color: '#666' },
   listContent: { paddingBottom: 24 },
-  empty: { textAlign: 'center', color: '#777', marginTop: 20 },
   itemCard: {
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

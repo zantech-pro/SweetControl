@@ -10,7 +10,7 @@ $email = strtolower(trim((string) $input['email']));
 $senha = (string) $input['senha'];
 
 $stmt = db()->prepare(
-    'SELECT id, nome, email, senha_hash, status
+    'SELECT id, nome, email, senha_hash, status, avatar_url
      FROM usuarios
      WHERE email = :email
      LIMIT 1'
@@ -42,6 +42,6 @@ json_response(200, [
         'id' => (int) $user['id'],
         'nome' => (string) $user['nome'],
         'email' => (string) $user['email'],
+        'avatar_url' => $user['avatar_url'] ?? null,
     ],
 ]);
-

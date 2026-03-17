@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 declare(strict_types=1);
 require_once dirname(__DIR__) . '/_bootstrap.php';
 
@@ -9,6 +9,7 @@ require_fields($input, ['nome', 'preco_venda', 'data_validade']);
 $usuarioId = resolve_user_id($input);
 $nome = trim((string) $input['nome']);
 $categoriaId = to_nullable_int($input['categoria_id'] ?? null);
+$fornecedorId = to_nullable_int($input['fornecedor_id'] ?? null);
 $precoCusto = to_nullable_float($input['preco_custo'] ?? null);
 $precoVenda = to_nullable_float($input['preco_venda'] ?? null);
 $quantidadeEstoque = to_nullable_int($input['quantidade_estoque'] ?? 0) ?? 0;
@@ -39,13 +40,25 @@ if ($categoriaId !== null) {
         $categoriaId = null;
     }
 }
+if ($fornecedorId !== null) {
+    $checkFornecedor = db()->prepare(
+        'SELECT id FROM fornecedores WHERE id = :id AND usuario_id = :usuario_id LIMIT 1'
+    );
+    $checkFornecedor->execute([
+        ':id' => $fornecedorId,
+        ':usuario_id' => $usuarioId,
+    ]);
+    if (!$checkFornecedor->fetch()) {
+        $fornecedorId = null;
+    }
+}
 
 $hasDataValidade = column_exists('produtos', 'data_validade');
 $hasPrecoCusto = column_exists('produtos', 'preco_custo');
 
 try {
-    $fields = 'usuario_id, categoria_id, nome, preco_venda, quantidade_estoque, estoque_minimo';
-    $values = ':usuario_id, :categoria_id, :nome, :preco_venda, :quantidade_estoque, :estoque_minimo';
+    $fields = 'usuario_id, categoria_id, fornecedor_id, nome, preco_venda, quantidade_estoque, estoque_minimo';
+    $values = ':usuario_id, :categoria_id, :fornecedor_id, :nome, :preco_venda, :quantidade_estoque, :estoque_minimo';
     if ($hasPrecoCusto) {
         $fields .= ', preco_custo';
         $values .= ', :preco_custo';
@@ -63,6 +76,7 @@ try {
     $params = [
         ':usuario_id' => $usuarioId,
         ':categoria_id' => $categoriaId,
+        ':fornecedor_id' => $fornecedorId,
         ':nome' => $nome,
         ':preco_venda' => $precoVenda,
         ':quantidade_estoque' => $quantidadeEstoque,

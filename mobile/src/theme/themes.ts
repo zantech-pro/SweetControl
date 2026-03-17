@@ -40,7 +40,23 @@ export const themes = {
     background: '#FFFDE7',
     card: '#FFFFFF',
     text: '#F57F17',
-  }
+  },
+  purpura: {
+    name: 'Purpura',
+    primary: '#6A1B9A',
+    secondary: '#CE93D8',
+    background: '#F3E5F5',
+    card: '#FFFFFF',
+    text: '#4A148C',
+  },
+  dark: {
+    name: 'Dark',
+    primary: '#26A69A',
+    secondary: '#80CBC4',
+    background: '#121212',
+    card: '#1E1E1E',
+    text: '#ECEFF1',
+  },
 };
 
 export type ThemeType = keyof typeof themes;

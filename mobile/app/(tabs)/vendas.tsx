@@ -1,15 +1,16 @@
-import React from 'react';
+﻿import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { useSelector } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
 import { RootState } from '../../src/store';
 import { themes, ThemeType } from '../../src/theme/themes';
+import { ui } from '../../src/ui/ui';
 
-// Mock de dados (Simulação de vendas para o protótipo)
+// Mock de dados (SimulaÃ§Ã£o de vendas para o protÃ³tipo)
 const VENDAS_RECENTES = [
-  { id: '1', cliente: 'Maria Silva', produto: 'Bolo de Pote (Verde)', valor: 'R$ 15,00', status: 'Concluído' },
-  { id: '2', cliente: 'João Paulo', produto: 'Bolo de Cenoura', valor: 'R$ 45,00', status: 'Pendente' },
-  { id: '3', cliente: 'Ana Costa', produto: 'Cento de Brigadeiro', valor: 'R$ 80,00', status: 'Concluído' },
+  { id: '1', cliente: 'Maria Silva', produto: 'Bolo de Pote (Verde)', valor: 'R$ 15,00', status: 'ConcluÃ­do' },
+  { id: '2', cliente: 'JoÃ£o Paulo', produto: 'Bolo de Cenoura', valor: 'R$ 45,00', status: 'Pendente' },
+  { id: '3', cliente: 'Ana Costa', produto: 'Cento de Brigadeiro', valor: 'R$ 80,00', status: 'ConcluÃ­do' },
 ];
 
 export default function Vendas() {
@@ -17,7 +18,7 @@ export default function Vendas() {
   const activeTheme = themes[themeName as ThemeType] || themes.verde;
 
   const renderItem = ({ item }: { item: typeof VENDAS_RECENTES[0] }) => (
-    <View style={[styles.saleCard, { backgroundColor: activeTheme.card }]}>
+    <View style={[ui.listCard, styles.saleCard, { backgroundColor: activeTheme.card }]}>
       <View>
         <Text style={[styles.clientName, { color: activeTheme.text }]}>{item.cliente}</Text>
         <Text style={styles.productName}>{item.produto}</Text>
@@ -30,8 +31,8 @@ export default function Vendas() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: activeTheme.background }]}>
-      <Text style={[styles.header, { color: activeTheme.text }]}>Resumo de Vendas</Text>
+    <View style={[ui.screen, { backgroundColor: activeTheme.background }]}>
+      <Text style={[ui.title, { color: activeTheme.text }]}>Resumo de Vendas</Text>
       
       <FlatList
         data={VENDAS_RECENTES}
@@ -40,10 +41,10 @@ export default function Vendas() {
         contentContainerStyle={{ paddingBottom: 100 }}
       />
 
-      {/* Botão Flutuante para Nova Venda */}
+      {/* BotÃ£o Flutuante para Nova Venda */}
       <TouchableOpacity 
         style={[styles.fab, { backgroundColor: activeTheme.primary }]}
-        onPress={() => alert('Abrir formulário de nova venda (Fase 2)')}
+        onPress={() => alert('Abrir formulÃ¡rio de nova venda (Fase 2)')}
       >
         <Ionicons name="add" size={30} color="#FFF" />
       </TouchableOpacity>
@@ -53,16 +54,10 @@ export default function Vendas() {
 
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  header: { fontSize: 22, fontWeight: 'bold', marginBottom: 12 },
   saleCard: {
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    elevation: 2,
   },
   clientName: { fontSize: 16, fontWeight: 'bold' },
   productName: { fontSize: 14, color: '#666' },

@@ -26,6 +26,7 @@ import {
   parseCurrencyInputBRL,
   parseDateBRToISO,
 } from '../../src/utils/formatters';
+import { ui } from '../../src/ui/ui';
 
 export default function Produtos() {
   const dispatch = useDispatch<AppDispatch>();
@@ -37,6 +38,9 @@ export default function Produtos() {
   const categorias = useSelector((state: RootState) =>
     state.referenceData.categorias.filter((item) => item.usuario_id === activeUserId)
   );
+  const fornecedores = useSelector((state: RootState) =>
+    state.referenceData.fornecedores.filter((item) => item.usuario_id === activeUserId)
+  );
   const activeTheme = themes[themeName as ThemeType] || themes.verde;
 
   const [nome, setNome] = useState('');
@@ -46,12 +50,36 @@ export default function Produtos() {
   const [estoqueMinimo, setEstoqueMinimo] = useState('');
   const [dataValidade, setDataValidade] = useState('');
   const [categoriaId, setCategoriaId] = useState<number | null>(null);
+  const [fornecedorId, setFornecedorId] = useState<number | null>(null);
   const [editandoId, setEditandoId] = useState<number | null>(null);
+  const [formVisivel, setFormVisivel] = useState(false);
+  const [busca, setBusca] = useState('');
+  const [ordenacao, setOrdenacao] = useState<'az' | 'za' | 'preco-asc' | 'preco-desc' | 'estoque-minimo'>('az');
 
   const tituloFormulario = useMemo(
     () => (editandoId ? 'Editar produto' : 'Novo produto'),
     [editandoId]
   );
+  const produtosFiltrados = useMemo(() => {
+    const term = busca.trim().toLowerCase();
+    const filtrados = term
+      ? produtos.filter((item) => item.nome.toLowerCase().includes(term))
+      : produtos;
+
+    return [...filtrados].sort((a, b) => {
+      if (ordenacao === 'az') return a.nome.localeCompare(b.nome);
+      if (ordenacao === 'za') return b.nome.localeCompare(a.nome);
+      if (ordenacao === 'preco-asc') return (a.preco_venda ?? 0) - (b.preco_venda ?? 0);
+      if (ordenacao === 'preco-desc') return (b.preco_venda ?? 0) - (a.preco_venda ?? 0);
+      if (ordenacao === 'estoque-minimo') {
+        const aAtingiu = (a.quantidade_estoque ?? 0) <= (a.estoque_minimo ?? 0);
+        const bAtingiu = (b.quantidade_estoque ?? 0) <= (b.estoque_minimo ?? 0);
+        if (aAtingiu !== bAtingiu) return aAtingiu ? -1 : 1;
+        return a.nome.localeCompare(b.nome);
+      }
+      return 0;
+    });
+  }, [produtos, busca, ordenacao]);
 
   function resetForm() {
     setNome('');
@@ -61,7 +89,9 @@ export default function Produtos() {
     setEstoqueMinimo('');
     setDataValidade('');
     setCategoriaId(null);
+    setFornecedorId(null);
     setEditandoId(null);
+    setFormVisivel(false);
   }
 
   function salvarProduto() {
@@ -115,6 +145,7 @@ export default function Produtos() {
           usuario_id: activeUserId,
           nome: nomeNormalizado,
           categoria_id: categoriaId,
+          fornecedor_id: fornecedorId,
           preco_venda: preco,
           preco_custo: custo,
           quantidade_estoque: estoque,
@@ -134,6 +165,7 @@ export default function Produtos() {
             usuario_id: activeUserId,
             nome: nomeNormalizado,
             categoria_id: categoriaId,
+            fornecedor_id: fornecedorId,
             preco_venda: preco,
             preco_custo: custo,
             quantidade_estoque: estoque,
@@ -154,6 +186,7 @@ export default function Produtos() {
         usuario_id: activeUserId,
         nome: nomeNormalizado,
         categoria_id: categoriaId,
+        fornecedor_id: fornecedorId,
         preco_venda: preco,
         preco_custo: custo,
         quantidade_estoque: estoque,
@@ -174,6 +207,7 @@ export default function Produtos() {
           usuario_id: activeUserId,
           nome: nomeNormalizado,
           categoria_id: categoriaId,
+          fornecedor_id: fornecedorId,
           preco_venda: preco,
           preco_custo: custo,
           quantidade_estoque: estoque,
@@ -195,8 +229,10 @@ export default function Produtos() {
     produtoCategoriaId?: number | null,
     produtoEstoqueMinimo?: number | null,
     produtoDataValidade?: string | null,
-    produtoCusto?: number | null
+    produtoCusto?: number | null,
+    produtoFornecedorId?: number | null
   ) {
+    setFormVisivel(true);
     setEditandoId(id);
     setNome(produtoNome);
     setPrecoVenda(produtoPreco ? formatCurrencyBRL(produtoPreco) : '');
@@ -205,6 +241,7 @@ export default function Produtos() {
     setCategoriaId(produtoCategoriaId ?? null);
     setEstoqueMinimo(produtoEstoqueMinimo?.toString() ?? '');
     setDataValidade(formatISODateToBR(produtoDataValidade));
+    setFornecedorId(produtoFornecedorId ?? null);
   }
 
   function abrirCalendario() {
@@ -253,99 +290,187 @@ export default function Produtos() {
     return categorias.find((item) => item.id === categoriaIdItem)?.nome ?? 'Categoria removida';
   }
 
+  function fornecedorNome(fornecedorIdItem?: number | null) {
+    if (!fornecedorIdItem) return 'Sem fornecedor';
+    return (
+      fornecedores.find((item) => item.id === fornecedorIdItem)?.nome ?? 'Fornecedor removido'
+    );
+  }
+
   return (
-    <View style={[styles.container, { backgroundColor: activeTheme.background }]}>
-      <Text style={[styles.title, { color: activeTheme.text }]}>Produtos</Text>
+    <View style={[ui.screen, { backgroundColor: activeTheme.background }]}>
+      <Text style={[ui.title, { color: activeTheme.text }]}>Produtos</Text>
 
-      <View style={[styles.formCard, { backgroundColor: activeTheme.card }]}>
-        <Text style={styles.formTitle}>{tituloFormulario}</Text>
-        <TextInput value={nome} onChangeText={setNome} placeholder="Nome do produto" style={styles.input} />
-        <TextInput
-          value={precoVenda}
-          onChangeText={(value) => setPrecoVenda(maskCurrencyInputBRL(value))}
-          placeholder="Preco de venda (R$ 0,00)"
-          keyboardType="decimal-pad"
-          style={styles.input}
-        />
-        <TextInput
-          value={precoCusto}
-          onChangeText={(value) => setPrecoCusto(maskCurrencyInputBRL(value))}
-          placeholder="Preco de custo (R$ 0,00)"
-          keyboardType="decimal-pad"
-          style={styles.input}
-        />
-        <TextInput
-          value={quantidadeEstoque}
-          onChangeText={setQuantidadeEstoque}
-          placeholder="Quantidade em estoque"
-          keyboardType="number-pad"
-          style={styles.input}
-        />
-        <TextInput
-          value={estoqueMinimo}
-          onChangeText={setEstoqueMinimo}
-          placeholder="Estoque minimo"
-          keyboardType="number-pad"
-          style={styles.input}
-        />
-        <TextInput
-          value={dataValidade}
-          onChangeText={(value) => setDataValidade(maskDateBR(value))}
-          placeholder="Validade (dd-mm-aaaa)"
-          keyboardType="number-pad"
-          style={styles.input}
-        />
-        <TouchableOpacity style={styles.secondaryBtn} onPress={abrirCalendario}>
-          <Text style={styles.secondaryBtnText}>Selecionar no calendario</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.label}>Categoria</Text>
-        <FlatList
-          horizontal
-          data={[{ id: 0, nome: 'Sem categoria' }, ...categorias]}
-          keyExtractor={(item) => item.id.toString()}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoryList}
-          renderItem={({ item }) => {
-            const idAtual = item.id === 0 ? null : item.id;
-            const selected = categoriaId === idAtual;
-            return (
-              <TouchableOpacity
-                style={[
-                  styles.categoryChip,
-                  { borderColor: selected ? activeTheme.primary : '#d9d9d9' },
-                ]}
-                onPress={() => setCategoriaId(idAtual)}
-              >
-                <Text style={{ color: selected ? activeTheme.primary : '#666' }}>{item.nome}</Text>
-              </TouchableOpacity>
-            );
-          }}
-        />
-
+      <View style={styles.actionsRow}>
         <TouchableOpacity
-          style={[styles.primaryBtn, { backgroundColor: activeTheme.primary }]}
-          onPress={salvarProduto}
+          style={[ui.primaryBtn, { backgroundColor: activeTheme.primary }]}
+          onPress={() => {
+            setFormVisivel((prev) => !prev);
+            if (!formVisivel) setEditandoId(null);
+          }}
         >
-          <Text style={styles.primaryBtnText}>{editandoId ? 'Atualizar' : 'Salvar'}</Text>
+          <Text style={ui.primaryText}>{formVisivel ? 'Fechar formulario' : 'Novo produto'}</Text>
         </TouchableOpacity>
-        {editandoId ? (
-          <TouchableOpacity style={styles.secondaryBtn} onPress={resetForm}>
-            <Text style={styles.secondaryBtnText}>Cancelar edicao</Text>
+      </View>
+
+      {formVisivel ? (
+        <View style={[ui.card, styles.formCard]}>
+          <Text style={ui.sectionTitle}>{tituloFormulario}</Text>
+          <TextInput
+            value={nome}
+            onChangeText={setNome}
+            placeholder="Nome do produto"
+            placeholderTextColor="#8a8a8a"
+            style={ui.input}
+          />
+          <TextInput
+            value={precoVenda}
+            onChangeText={(value) => setPrecoVenda(maskCurrencyInputBRL(value))}
+            placeholder="Preco de venda (R$ 0,00)"
+            placeholderTextColor="#8a8a8a"
+            keyboardType="decimal-pad"
+            style={ui.input}
+          />
+          <TextInput
+            value={precoCusto}
+            onChangeText={(value) => setPrecoCusto(maskCurrencyInputBRL(value))}
+            placeholder="Preco de custo (R$ 0,00)"
+            placeholderTextColor="#8a8a8a"
+            keyboardType="decimal-pad"
+            style={ui.input}
+          />
+          <TextInput
+            value={quantidadeEstoque}
+            onChangeText={setQuantidadeEstoque}
+            placeholder="Quantidade em estoque"
+            placeholderTextColor="#8a8a8a"
+            keyboardType="number-pad"
+            style={ui.input}
+          />
+          <TextInput
+            value={estoqueMinimo}
+            onChangeText={setEstoqueMinimo}
+            placeholder="Estoque minimo"
+            placeholderTextColor="#8a8a8a"
+            keyboardType="number-pad"
+            style={ui.input}
+          />
+          <TextInput
+            value={dataValidade}
+            onChangeText={(value) => setDataValidade(maskDateBR(value))}
+            placeholder="Validade (dd-mm-aaaa)"
+            placeholderTextColor="#8a8a8a"
+            keyboardType="number-pad"
+            style={ui.input}
+          />
+          <TouchableOpacity style={styles.secondaryBtn} onPress={abrirCalendario}>
+            <Text style={styles.secondaryBtnText}>Selecionar no calendario</Text>
           </TouchableOpacity>
-        ) : null}
+
+          <Text style={styles.label}>Categoria</Text>
+          <FlatList
+            horizontal
+            data={[{ id: 0, nome: 'Sem categoria' }, ...categorias]}
+            keyExtractor={(item) => item.id.toString()}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoryList}
+            renderItem={({ item }) => {
+              const idAtual = item.id === 0 ? null : item.id;
+              const selected = categoriaId === idAtual;
+              return (
+                <TouchableOpacity
+                  style={[
+                    styles.categoryChip,
+                    { borderColor: selected ? activeTheme.primary : '#d9d9d9' },
+                  ]}
+                  onPress={() => setCategoriaId(idAtual)}
+                >
+                  <Text style={{ color: selected ? activeTheme.primary : '#666' }}>{item.nome}</Text>
+                </TouchableOpacity>
+              );
+            }}
+          />
+
+          <Text style={styles.label}>Fornecedor</Text>
+          <FlatList
+            horizontal
+            data={[{ id: 0, nome: 'Sem fornecedor' }, ...fornecedores]}
+            keyExtractor={(item) => item.id.toString()}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoryList}
+            renderItem={({ item }) => {
+              const idAtual = item.id === 0 ? null : item.id;
+              const selected = fornecedorId === idAtual;
+              return (
+                <TouchableOpacity
+                  style={[
+                    styles.categoryChip,
+                    { borderColor: selected ? activeTheme.primary : '#d9d9d9' },
+                  ]}
+                  onPress={() => setFornecedorId(idAtual)}
+                >
+                  <Text style={{ color: selected ? activeTheme.primary : '#666' }}>{item.nome}</Text>
+                </TouchableOpacity>
+              );
+            }}
+          />
+
+          <TouchableOpacity
+            style={[ui.primaryBtn, { backgroundColor: activeTheme.primary }]}
+            onPress={salvarProduto}
+          >
+            <Text style={ui.primaryText}>{editandoId ? 'Atualizar' : 'Salvar'}</Text>
+          </TouchableOpacity>
+          {editandoId ? (
+            <TouchableOpacity style={styles.secondaryBtn} onPress={resetForm}>
+              <Text style={styles.secondaryBtnText}>Cancelar edicao</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      ) : null}
+
+      <TextInput
+        value={busca}
+        onChangeText={setBusca}
+        placeholder="Pesquisar produto"
+        placeholderTextColor="#8a8a8a"
+        style={ui.searchInput}
+      />
+      <Text style={styles.label}>Ordenar por</Text>
+      <View style={styles.orderRow}>
+        {[
+          { id: 'az', label: 'A-Z' },
+          { id: 'za', label: 'Z-A' },
+          { id: 'preco-asc', label: 'Menor preco' },
+          { id: 'preco-desc', label: 'Maior preco' },
+          { id: 'estoque-minimo', label: 'Estoque minimo' },
+        ].map((item) => (
+          <TouchableOpacity
+            key={item.id}
+            style={[
+              styles.orderChip,
+              { borderColor: ordenacao === item.id ? activeTheme.primary : '#d9d9d9' },
+            ]}
+            onPress={() => setOrdenacao(item.id as typeof ordenacao)}
+          >
+            <Text style={{ color: ordenacao === item.id ? activeTheme.primary : '#666' }}>
+              {item.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       <FlatList
-        data={produtos}
+        data={produtosFiltrados}
         keyExtractor={(item) => item.id.toString()}
-        ListEmptyComponent={<Text style={styles.empty}>Nenhum produto cadastrado.</Text>}
+        ListEmptyComponent={<Text style={ui.empty}>Nenhum produto cadastrado.</Text>}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
-          <View style={[styles.itemCard, { backgroundColor: activeTheme.card }]}>
+          <View style={[ui.listCard, styles.itemCard, { backgroundColor: activeTheme.card }]}>
             <View style={styles.itemInfo}>
               <Text style={[styles.itemNome, { color: activeTheme.text }]}>{item.nome}</Text>
               <Text style={styles.itemDescricao}>Categoria: {categoriaNome(item.categoria_id)}</Text>
+              <Text style={styles.itemDescricao}>Fornecedor: {fornecedorNome(item.fornecedor_id)}</Text>
               <Text style={styles.itemDescricao}>Preco: {formatCurrencyBRL(item.preco_venda ?? 0)}</Text>
               <Text style={styles.itemDescricao}>
                 Preco custo: {formatCurrencyBRL(item.preco_custo ?? 0)}
@@ -368,7 +493,8 @@ export default function Produtos() {
                     item.categoria_id,
                     item.estoque_minimo,
                     item.data_validade,
-                    item.preco_custo
+                    item.preco_custo,
+                    item.fornecedor_id
                   )
                 }
               >
@@ -386,19 +512,8 @@ export default function Produtos() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  title: { fontSize: 22, fontWeight: '700', marginBottom: 12 },
-  formCard: { borderRadius: 12, padding: 14, marginBottom: 14 },
-  formTitle: { fontSize: 16, fontWeight: '600', marginBottom: 8 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#d9d9d9',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    marginBottom: 10,
-    backgroundColor: '#fff',
-  },
+  actionsRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 10 },
+  formCard: { marginBottom: 14 },
   label: { marginBottom: 8, color: '#444', fontWeight: '600' },
   categoryList: { paddingBottom: 10 },
   categoryChip: {
@@ -408,16 +523,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginRight: 8,
   },
-  primaryBtn: { paddingVertical: 10, borderRadius: 8, alignItems: 'center' },
-  primaryBtnText: { color: '#fff', fontWeight: '700' },
   secondaryBtn: { marginTop: 10, alignItems: 'center' },
   secondaryBtnText: { color: '#666' },
+  orderRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10 },
+  orderChip: {
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    marginRight: 8,
+    marginBottom: 8,
+  },
   listContent: { paddingBottom: 24 },
-  empty: { textAlign: 'center', color: '#777', marginTop: 20 },
   itemCard: {
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

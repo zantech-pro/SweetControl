@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 declare(strict_types=1);
 require_once dirname(__DIR__) . '/_bootstrap.php';
 
@@ -11,7 +11,7 @@ $hasPrecoCusto = column_exists('produtos', 'preco_custo');
 $precoCustoField = $hasPrecoCusto ? 'p.preco_custo' : 'NULL as preco_custo';
 
 $sql = "
-SELECT p.id, p.usuario_id, p.categoria_id, p.nome, p.preco_venda, {$precoCustoField}, p.quantidade_estoque, p.estoque_minimo,
+SELECT p.id, p.usuario_id, p.categoria_id, p.fornecedor_id, p.nome, p.preco_venda, {$precoCustoField}, p.quantidade_estoque, p.estoque_minimo,
        {$validadeField},
        p.status, c.nome as categoria_nome
 FROM produtos p

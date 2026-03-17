@@ -12,6 +12,7 @@ export type Produto = {
   usuario_id: number;
   nome: string;
   categoria_id?: number | null;
+  fornecedor_id?: number | null;
   preco_venda?: number | null;
   preco_custo?: number | null;
   quantidade_estoque?: number | null;
@@ -123,6 +124,7 @@ export const referenceDataSlice = createSlice({
         usuario_id: number;
         nome: string;
         categoria_id?: number | null;
+        fornecedor_id?: number | null;
         preco_venda?: number | null;
         preco_custo?: number | null;
         quantidade_estoque?: number | null;
@@ -139,6 +141,7 @@ export const referenceDataSlice = createSlice({
 
       produto.nome = action.payload.nome;
       produto.categoria_id = action.payload.categoria_id ?? null;
+      produto.fornecedor_id = action.payload.fornecedor_id ?? null;
       produto.preco_venda = action.payload.preco_venda ?? null;
       produto.preco_custo = action.payload.preco_custo ?? null;
       produto.quantidade_estoque = action.payload.quantidade_estoque ?? null;

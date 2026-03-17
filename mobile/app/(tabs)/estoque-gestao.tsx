@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -16,6 +16,7 @@ import { ThemeType, themes } from '../../src/theme/themes';
 import { addMovimentacaoEstoqueLocal } from '../../src/store/slices/businessSlice';
 import { adjustProdutoEstoqueLocal } from '../../src/store/slices/referenceDataSlice';
 import { enqueueSyncItem } from '../../src/store/slices/syncQueueSlice';
+import { ui } from '../../src/ui/ui';
 
 function diasParaVencer(dataValidade?: string | null) {
   if (!dataValidade) return null;
@@ -112,14 +113,14 @@ export default function EstoqueGestao() {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: activeTheme.background }]}
+      style={[ui.screen, { backgroundColor: activeTheme.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.scrollContent}
       >
-        <Text style={[styles.title, { color: activeTheme.text }]}>Gestao de Estoque</Text>
+        <Text style={[ui.title, { color: activeTheme.text }]}>Gestao de Estoque</Text>
 
         <Text style={styles.section}>Alerta de reposicao</Text>
         {alertaReposicao.length === 0 ? (
@@ -127,7 +128,7 @@ export default function EstoqueGestao() {
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {alertaReposicao.map((item) => (
-              <View key={item.id} style={[styles.alertCard, { backgroundColor: '#fff8e1' }]}>
+              <View key={item.id} style={[ui.listCard, styles.alertCard, { backgroundColor: '#fff8e1' }]}>
                 <Text style={styles.alertTitle}>{item.nome}</Text>
                 <Text style={styles.small}>
                   Estoque: {item.quantidade_estoque ?? 0} | Minimo: {item.estoque_minimo ?? 0}
@@ -143,7 +144,7 @@ export default function EstoqueGestao() {
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {alertaValidade.map((item) => (
-              <View key={item.id} style={[styles.alertCard, { backgroundColor: '#ffebee' }]}>
+              <View key={item.id} style={[ui.listCard, styles.alertCard, { backgroundColor: '#ffebee' }]}>
                 <Text style={styles.alertTitle}>{item.nome}</Text>
                 <Text style={styles.small}>
                   Validade: {item.data_validade} | {item.dias} dia(s)
@@ -159,7 +160,7 @@ export default function EstoqueGestao() {
             <TouchableOpacity
               key={item.id}
               style={[
-                styles.chip,
+                ui.chip,
                 { borderColor: produtoId === item.id ? activeTheme.primary : '#ccc' },
               ]}
               onPress={() => setProdutoId(item.id)}
@@ -173,7 +174,7 @@ export default function EstoqueGestao() {
           {(['entrada', 'saida', 'ajuste'] as const).map((item) => (
             <TouchableOpacity
               key={item}
-              style={[styles.chip, { borderColor: tipo === item ? activeTheme.primary : '#ccc' }]}
+              style={[ui.chip, { borderColor: tipo === item ? activeTheme.primary : '#ccc' }]}
               onPress={() => setTipo(item)}
             >
               <Text style={{ color: tipo === item ? activeTheme.primary : '#555' }}>{item}</Text>
@@ -187,7 +188,7 @@ export default function EstoqueGestao() {
           placeholder="Quantidade"
           placeholderTextColor="#8a8a8a"
           keyboardType="number-pad"
-          style={styles.input}
+          style={ui.input}
           returnKeyType="next"
           blurOnSubmit={false}
         />
@@ -196,10 +197,10 @@ export default function EstoqueGestao() {
           onChangeText={setMotivo}
           placeholder="Motivo"
           placeholderTextColor="#8a8a8a"
-          style={styles.input}
+          style={ui.input}
         />
-        <TouchableOpacity style={[styles.button, { backgroundColor: activeTheme.primary }]} onPress={registrarMovimento}>
-          <Text style={styles.buttonText}>Registrar movimentacao</Text>
+        <TouchableOpacity style={[ui.primaryBtn, { backgroundColor: activeTheme.primary }]} onPress={registrarMovimento}>
+          <Text style={ui.primaryText}>Registrar movimentacao</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -207,25 +208,11 @@ export default function EstoqueGestao() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
   scrollContent: { paddingBottom: 24 },
-  title: { fontSize: 22, fontWeight: '700', marginBottom: 8 },
   section: { marginTop: 10, marginBottom: 6, fontWeight: '700', color: '#444' },
-  alertCard: { borderRadius: 10, padding: 10, marginRight: 8, minWidth: 180 },
+  alertCard: { marginRight: 8, minWidth: 180 },
   alertTitle: { fontWeight: '700', color: '#333' },
-  chip: { borderWidth: 1, borderRadius: 16, paddingHorizontal: 10, paddingVertical: 6, marginRight: 8 },
   row: { flexDirection: 'row', marginTop: 8 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    marginTop: 10,
-    backgroundColor: '#fff',
-    color: '#222',
-  },
-  button: { marginTop: 10, borderRadius: 10, padding: 12, alignItems: 'center' },
-  buttonText: { color: '#fff', fontWeight: '700' },
+  inputSpacer: { marginTop: 10 },
   small: { color: '#666' },
 });

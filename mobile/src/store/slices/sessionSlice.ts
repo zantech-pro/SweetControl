@@ -6,6 +6,7 @@ type KnownUser = {
   email: string;
   token: string | null;
   lastOnlineLoginAt: string;
+  avatarUri?: string | null;
 };
 
 type OfflineCredential = {
@@ -35,7 +36,7 @@ export const sessionSlice = createSlice({
     loginSuccessOnline: (
       state,
       action: PayloadAction<{
-        user: { id: number; nome: string; email: string };
+        user: { id: number; nome: string; email: string; avatar_url?: string | null };
         token?: string | null;
         passwordHash: string;
       }>
@@ -56,6 +57,7 @@ export const sessionSlice = createSlice({
         email: user.email.toLowerCase(),
         token: action.payload.token ?? null,
         lastOnlineLoginAt: nowIso,
+        avatarUri: user.avatar_url ?? null,
       };
       state.offlineCredentialsByEmail[user.email.toLowerCase()] = {
         userId: user.id,
@@ -73,6 +75,19 @@ export const sessionSlice = createSlice({
       state.activeUserId = action.payload;
       state.isAuthenticated = true;
     },
+    updateUserProfile: (
+      state,
+      action: PayloadAction<{ userId: number; nome?: string; avatarUri?: string | null }>
+    ) => {
+      const user = state.knownUsers[String(action.payload.userId)];
+      if (!user) return;
+      if (action.payload.nome !== undefined) {
+        user.nome = action.payload.nome;
+      }
+      if (action.payload.avatarUri !== undefined) {
+        user.avatarUri = action.payload.avatarUri;
+      }
+    },
     logout: (state) => {
       state.activeUserId = null;
       state.isAuthenticated = false;
@@ -80,6 +95,11 @@ export const sessionSlice = createSlice({
   },
 });
 
-export const { loginSuccessOnline, loginSuccessOffline, switchActiveUser, logout } =
-  sessionSlice.actions;
+export const {
+  loginSuccessOnline,
+  loginSuccessOffline,
+  switchActiveUser,
+  updateUserProfile,
+  logout,
+} = sessionSlice.actions;
 export default sessionSlice.reducer;

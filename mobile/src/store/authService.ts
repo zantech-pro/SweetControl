@@ -11,7 +11,7 @@ type LoginPayload = {
 type LoginResponse = {
   success: boolean;
   token?: string;
-  user?: { id: number; nome: string; email: string };
+  user?: { id: number; nome: string; email: string; avatar_url?: string | null };
   error?: string;
 };
 

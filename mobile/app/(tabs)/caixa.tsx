@@ -1,5 +1,17 @@
-import React, { useMemo, useState } from 'react';
-import { Alert, FlatList, Share, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+﻿import React, { useMemo, useState } from 'react';
+import {
+  Alert,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  Share,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../../src/store';
 import { ThemeType, themes } from '../../src/theme/themes';
@@ -16,6 +28,7 @@ import {
   maskCurrencyInputBRL,
   parseCurrencyInputBRL,
 } from '../../src/utils/formatters';
+import { ui } from '../../src/ui/ui';
 
 type CartItem = { produto_id: number; nome: string; preco: number; quantidade: number };
 
@@ -36,13 +49,25 @@ export default function Caixa() {
     state.business.pedidosOnline.filter((item) => item.usuario_id === activeUserId)
   );
   const activeTheme = themes[themeName as ThemeType] || themes.verde;
+  const { width } = useWindowDimensions();
+  const productColumns = width >= 360 ? 2 : 1;
+  const screenPadding = 16;
+  const productGap = 10;
+  const productCardWidth =
+    productColumns === 1
+      ? width - screenPadding * 2
+      : (width - screenPadding * 2 - productGap) / 2;
 
   const [clienteId, setClienteId] = useState<number | null>(null);
+  const [clientesVisiveis, setClientesVisiveis] = useState(true);
+  const [produtosVisiveis, setProdutosVisiveis] = useState(true);
   const [metodo, setMetodo] = useState<MetodoPagamento>('pix');
   const [desconto, setDesconto] = useState('');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [ultimoRecibo, setUltimoRecibo] = useState('');
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
+  const [clienteSearch, setClienteSearch] = useState('');
+  const [produtoSearch, setProdutoSearch] = useState('');
 
   const totalBruto = useMemo(
     () => cart.reduce((acc, item) => acc + item.preco * item.quantidade, 0),
@@ -50,13 +75,23 @@ export default function Caixa() {
   );
   const descontoValor = useMemo(() => parseCurrencyInputBRL(desconto), [desconto]);
   const totalLiquido = useMemo(() => Math.max(totalBruto - descontoValor, 0), [totalBruto, descontoValor]);
-  const produtosVisiveis = useMemo(() => {
+  const produtosPorCategoria = useMemo(() => {
     if (selectedCategoryIds.length === 0) return produtos;
     return produtos.filter((item) => {
       const categoriaId = item.categoria_id ?? null;
       return categoriaId !== null && selectedCategoryIds.includes(categoriaId);
     });
   }, [produtos, selectedCategoryIds]);
+  const clientesFiltrados = useMemo(() => {
+    const term = clienteSearch.trim().toLowerCase();
+    if (!term) return clientes;
+    return clientes.filter((item) => item.nome.toLowerCase().includes(term));
+  }, [clientes, clienteSearch]);
+  const produtosFiltrados = useMemo(() => {
+    const term = produtoSearch.trim().toLowerCase();
+    if (!term) return produtosPorCategoria;
+    return produtosPorCategoria.filter((item) => item.nome.toLowerCase().includes(term));
+  }, [produtosPorCategoria, produtoSearch]);
 
   function toggleCategoriaFiltro(categoriaId: number) {
     setSelectedCategoryIds((prev) =>
@@ -65,7 +100,7 @@ export default function Caixa() {
   }
 
   function addProduto(produtoId: number) {
-    const produto = produtosVisiveis.find((item) => item.id === produtoId);
+    const produto = produtosPorCategoria.find((item) => item.id === produtoId);
     if (!produto) return;
 
     const preco = Number(produto.preco_venda ?? 0);
@@ -83,6 +118,7 @@ export default function Caixa() {
         item.produto_id === produtoId ? { ...item, quantidade: item.quantidade + 1 } : item
       );
     });
+    setProdutosVisiveis(false);
   }
 
   function alterarQtd(produtoId: number, delta: number) {
@@ -94,6 +130,12 @@ export default function Caixa() {
         .filter((item) => item.quantidade > 0)
     );
   }
+
+  React.useEffect(() => {
+    if (cart.length === 0) {
+      setProdutosVisiveis(true);
+    }
+  }, [cart.length]);
 
   function finalizarVenda() {
     if (!activeUserId) {
@@ -249,73 +291,138 @@ export default function Caixa() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: activeTheme.background }]}>
-      <Text style={[styles.title, { color: activeTheme.text }]}>Frente de Caixa</Text>
+    <KeyboardAvoidingView
+      style={[ui.screen, { backgroundColor: activeTheme.background }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
+    >
+      <Text style={[ui.title, { color: activeTheme.text }]}>Frente de Caixa</Text>
 
-      <Text style={styles.sectionTitle}>Cliente</Text>
-      <FlatList
-        horizontal
-        data={[{ id: 0, nome: 'Sem cliente' }, ...clientes]}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.horizontalList}
-        renderItem={({ item }) => {
-          const idAtual = item.id === 0 ? null : item.id;
-          const selected = clienteId === idAtual;
-          return (
-            <TouchableOpacity
-              style={[styles.chip, { borderColor: selected ? activeTheme.primary : '#ccc' }]}
-              onPress={() => setClienteId(idAtual)}
-            >
-              <Text style={{ color: selected ? activeTheme.primary : '#555' }}>{item.nome}</Text>
-            </TouchableOpacity>
-          );
-        }}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>
+          Cliente: {clienteId === null ? 'Sem cliente' : clientes.find((c) => c.id === clienteId)?.nome ?? '-'}
+        </Text>
+        <TouchableOpacity
+          style={styles.linkBtn}
+          onPress={() => setClientesVisiveis((prev) => !prev)}
+        >
+          <Text style={styles.linkText}>{clientesVisiveis ? 'Ocultar' : 'Trocar'}</Text>
+        </TouchableOpacity>
+      </View>
+      <TextInput
+        value={clienteSearch}
+        onChangeText={setClienteSearch}
+        placeholder="Pesquisar cliente"
+        placeholderTextColor="#8a8a8a"
+        style={ui.searchInput}
       />
+      {clientesVisiveis ? (
+        <FlatList
+          data={[{ id: 0, nome: 'Sem cliente' }, ...clientesFiltrados]}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.gridList}
+          columnWrapperStyle={styles.gridRow}
+          numColumns={2}
+          renderItem={({ item }) => {
+            const idAtual = item.id === 0 ? null : item.id;
+            const selected = clienteId === idAtual;
+            return (
+              <TouchableOpacity
+                style={[
+                  ui.chip,
+                  styles.gridItem,
+                  { borderColor: selected ? activeTheme.primary : '#ccc' },
+                ]}
+                onPress={() => {
+                  setClienteId(idAtual);
+                  setClientesVisiveis(false);
+                }}
+              >
+                <Text style={{ color: selected ? activeTheme.primary : '#555' }}>{item.nome}</Text>
+              </TouchableOpacity>
+            );
+          }}
+        />
+      ) : null}
 
-      <Text style={styles.sectionTitle}>Produtos</Text>
-      <FlatList
-        horizontal
-        data={categorias}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.horizontalList}
-        ListHeaderComponent={
-          <TouchableOpacity
-            style={[
-              styles.chip,
-              { borderColor: selectedCategoryIds.length === 0 ? activeTheme.primary : '#ccc' },
-            ]}
-            onPress={() => setSelectedCategoryIds([])}
-          >
-            <Text style={{ color: selectedCategoryIds.length === 0 ? activeTheme.primary : '#555' }}>
-              Todas
-            </Text>
-          </TouchableOpacity>
-        }
-        renderItem={({ item }) => {
-          const selected = selectedCategoryIds.includes(item.id);
-          return (
-            <TouchableOpacity
-              style={[styles.chip, { borderColor: selected ? activeTheme.primary : '#ccc' }]}
-              onPress={() => toggleCategoriaFiltro(item.id)}
-            >
-              <Text style={{ color: selected ? activeTheme.primary : '#555' }}>{item.nome}</Text>
-            </TouchableOpacity>
-          );
-        }}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Produtos</Text>
+        <TouchableOpacity
+          style={styles.linkBtn}
+          onPress={() => setProdutosVisiveis((prev) => !prev)}
+        >
+          <Text style={styles.linkText}>{produtosVisiveis ? 'Ocultar' : 'Adicionar mais'}</Text>
+        </TouchableOpacity>
+      </View>
+      <TextInput
+        value={produtoSearch}
+        onChangeText={setProdutoSearch}
+        placeholder="Pesquisar produto"
+        placeholderTextColor="#8a8a8a"
+        style={ui.searchInput}
       />
-      <FlatList
-        horizontal
-        data={produtosVisiveis}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.horizontalList}
-        ListEmptyComponent={<Text style={styles.smallText}>Nenhum produto nesta(s) categoria(s).</Text>}
-        renderItem={({ item }) => (
-          <TouchableOpacity style={[styles.productBtn, { backgroundColor: activeTheme.card }]} onPress={() => addProduto(item.id)}>
-            <Text style={{ fontWeight: '700', color: activeTheme.text }}>{item.nome}</Text>
-            <Text style={styles.smallText}>{formatCurrencyBRL(item.preco_venda ?? 0)}</Text>
-          </TouchableOpacity>
-        )}
-      />
+      {produtosVisiveis ? (
+        <>
+          <FlatList
+            horizontal
+            data={categorias}
+            keyExtractor={(item) => item.id.toString()}
+            contentContainerStyle={styles.horizontalList}
+            ListHeaderComponent={
+              <TouchableOpacity
+                style={[
+                  ui.chip,
+                  { borderColor: selectedCategoryIds.length === 0 ? activeTheme.primary : '#ccc' },
+                ]}
+                onPress={() => setSelectedCategoryIds([])}
+              >
+                <Text style={{ color: selectedCategoryIds.length === 0 ? activeTheme.primary : '#555' }}>
+                  Todas
+                </Text>
+              </TouchableOpacity>
+            }
+            renderItem={({ item }) => {
+              const selected = selectedCategoryIds.includes(item.id);
+              return (
+                <TouchableOpacity
+                  style={[ui.chip, { borderColor: selected ? activeTheme.primary : '#ccc' }]}
+                  onPress={() => toggleCategoriaFiltro(item.id)}
+                >
+                  <Text style={{ color: selected ? activeTheme.primary : '#555' }}>{item.nome}</Text>
+                </TouchableOpacity>
+              );
+            }}
+          />
+          <FlatList
+            data={produtosFiltrados}
+            keyExtractor={(item) => item.id.toString()}
+            contentContainerStyle={styles.gridList}
+            columnWrapperStyle={productColumns > 1 ? styles.gridRow : undefined}
+            numColumns={productColumns}
+            ListEmptyComponent={<Text style={styles.smallText}>Nenhum produto nesta(s) categoria(s).</Text>}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[
+                  ui.listCard,
+                  styles.productCard,
+                  productColumns === 1 ? styles.productCardSingle : styles.productCardGrid,
+                  { width: productCardWidth },
+                  { backgroundColor: activeTheme.card },
+                ]}
+                onPress={() => addProduto(item.id)}
+              >
+                <Text
+                  style={[styles.productTitle, { color: activeTheme.text }]}
+                  numberOfLines={2}
+                >
+                  {item.nome}
+                </Text>
+                <Text style={styles.productPrice}>{formatCurrencyBRL(item.preco_venda ?? 0)}</Text>
+              </TouchableOpacity>
+            )}
+          />
+        </>
+      ) : null}
 
       <Text style={styles.sectionTitle}>Carrinho</Text>
       <FlatList
@@ -323,7 +430,7 @@ export default function Caixa() {
         keyExtractor={(item) => item.produto_id.toString()}
         ListEmptyComponent={<Text style={styles.smallText}>Nenhum item adicionado.</Text>}
         renderItem={({ item }) => (
-          <View style={[styles.cartItem, { backgroundColor: activeTheme.card }]}>
+          <View style={[ui.listCard, styles.cartItem, { backgroundColor: activeTheme.card }]}>
             <View style={{ flex: 1 }}>
               <Text style={{ color: activeTheme.text, fontWeight: '700' }}>{item.nome}</Text>
               <Text style={styles.smallText}>Subtotal: {formatCurrencyBRL(item.preco * item.quantidade)}</Text>
@@ -345,14 +452,15 @@ export default function Caixa() {
         value={desconto}
         onChangeText={(value) => setDesconto(maskCurrencyInputBRL(value))}
         placeholder="Desconto (R$ 0,00)"
+        placeholderTextColor="#8a8a8a"
         keyboardType="decimal-pad"
-        style={styles.input}
+        style={ui.input}
       />
       <View style={styles.paymentRow}>
         {(['pix', 'dinheiro', 'cartao', 'transferencia'] as MetodoPagamento[]).map((item) => (
           <TouchableOpacity
             key={item}
-            style={[styles.chip, { borderColor: metodo === item ? activeTheme.primary : '#ccc' }]}
+            style={[ui.chip, { borderColor: metodo === item ? activeTheme.primary : '#ccc' }]}
             onPress={() => setMetodo(item)}
           >
             <Text style={{ color: metodo === item ? activeTheme.primary : '#555' }}>{item}</Text>
@@ -363,11 +471,11 @@ export default function Caixa() {
       <Text style={styles.total}>Total bruto: {formatCurrencyBRL(totalBruto)}</Text>
       <Text style={styles.total}>Total liquido: {formatCurrencyBRL(totalLiquido)}</Text>
 
-      <TouchableOpacity style={[styles.finalizarBtn, { backgroundColor: activeTheme.primary }]} onPress={finalizarVenda}>
-        <Text style={styles.finalizarText}>Registrar Venda</Text>
+      <TouchableOpacity style={[ui.primaryBtn, styles.finalizarBtn, { backgroundColor: activeTheme.primary }]} onPress={finalizarVenda}>
+        <Text style={ui.primaryText}>Registrar Venda</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={[styles.finalizarBtn, { backgroundColor: '#6d4c41' }]} onPress={compartilharRecibo}>
-        <Text style={styles.finalizarText}>Compartilhar Recibo Digital</Text>
+      <TouchableOpacity style={[ui.primaryBtn, styles.finalizarBtn, { backgroundColor: '#6d4c41' }]} onPress={compartilharRecibo}>
+        <Text style={ui.primaryText}>Compartilhar Recibo Digital</Text>
       </TouchableOpacity>
 
       <Text style={styles.sectionTitle}>Pedidos Online</Text>
@@ -375,7 +483,7 @@ export default function Caixa() {
         data={pedidosOnline}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
-          <View style={[styles.cartItem, { backgroundColor: activeTheme.card }]}>
+          <View style={[ui.listCard, styles.cartItem, { backgroundColor: activeTheme.card }]}>
             <View style={{ flex: 1 }}>
               <Text style={{ color: activeTheme.text, fontWeight: '700' }}>{item.cliente_nome}</Text>
               <Text style={styles.smallText}>{item.itens_resumo}</Text>
@@ -403,21 +511,25 @@ export default function Caixa() {
           </View>
         )}
       />
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  title: { fontSize: 22, fontWeight: '700', marginBottom: 8 },
   sectionTitle: { marginTop: 10, marginBottom: 6, fontWeight: '700', color: '#444' },
+  sectionHeader: { marginTop: 10, marginBottom: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  linkBtn: { paddingHorizontal: 6, paddingVertical: 4 },
+  linkText: { color: '#1e88e5', fontWeight: '600' },
   horizontalList: { paddingBottom: 6 },
-  chip: { borderWidth: 1, borderRadius: 16, paddingHorizontal: 10, paddingVertical: 6, marginRight: 8 },
-  productBtn: { borderRadius: 10, padding: 10, marginRight: 8, minWidth: 120 },
+  productCard: { justifyContent: 'space-between', paddingVertical: 8, paddingHorizontal: 10 },
+  productCardGrid: { minHeight: 96 },
+  productCardSingle: { minHeight: 84 },
+  productTitle: { fontWeight: '700', fontSize: 14, lineHeight: 17 },
+  productPrice: { color: '#666', marginTop: 2, fontSize: 12 },
+  gridList: { paddingBottom: 6 },
+  gridRow: { justifyContent: 'space-between', marginBottom: 10 },
+  gridItem: { flex: 1, marginRight: 0, minHeight: 90 },
   cartItem: {
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -425,18 +537,8 @@ const styles = StyleSheet.create({
   qtyActions: { flexDirection: 'row', alignItems: 'center' },
   actionText: { fontSize: 22, fontWeight: '700', color: '#1e88e5' },
   qtyText: { fontWeight: '700', minWidth: 24, textAlign: 'center' },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    marginTop: 10,
-    backgroundColor: '#fff',
-  },
   paymentRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 },
   total: { marginTop: 6, fontWeight: '700', color: '#333' },
-  finalizarBtn: { marginTop: 12, borderRadius: 10, padding: 12, alignItems: 'center' },
-  finalizarText: { color: '#fff', fontWeight: '700' },
+  finalizarBtn: { marginTop: 12 },
   smallText: { color: '#666' },
 });

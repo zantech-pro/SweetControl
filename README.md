@@ -170,3 +170,38 @@ Impacto Principal: Inclusão digital, profissionalização da marca e otimizaç�
 
 ---
 Projeto desenvolvido como parte das Atividades de Extensão Universitária.
+
+## ✅ Atualização de Versão: 1.0 → 2.0
+
+### 🧩 Módulos e Funcionalidades
+* **Fornecedores**: CRUD completo com sincronização offline/online.
+* **Compras**: Registro de compras com fornecedor, produto e impacto no estoque.
+* **Gastos Extras**: Módulo separado do BI para lançamentos financeiros.
+
+### 📊 BI e Análise de Dados
+* **Lucro real por produto**: Cálculo cruzando custo e preço de venda.
+* **Modelos preditivos simples**: Previsão de compras com regressão linear.
+* **Probabilidades e variáveis aleatórias**: Gráficos de distribuição e tickets.
+* **Teste de hipótese**: Compara médias mensais recentes e anteriores.
+* **Relatório em PDF**: Geração de relatório completo direto no app.
+
+### 🎨 UI/UX e Usabilidade
+* **Design system mobile**: Padroniza cards, inputs, botões e tipografia.
+* **Layout responsivo**: Ajustes para telas 360–420px.
+* **Formulários colapsáveis**: Reduz poluição visual e melhora foco.
+* **Busca e filtros**: Facilita encontrar clientes, produtos e fornecedores.
+
+### 👤 Perfil e Conta
+* **Avatar com persistência**: Foto salva no backend e sincronizada.
+* **Edição de nome**: Atualiza local e online.
+* **Câmera e galeria**: Suporte completo para troca de foto.
+
+### 🧱 Marca e Ícones
+* **Ícones oficiais**: Splash, favicon e adaptive icon.
+* **Versão monochrome**: Compatível com launchers Android.
+* **Nome do app**: Padronizado para SweetControl.
+
+### 🧪 Qualidade e Estabilidade
+* **Correção de erros 500**: Ajustes de BOM/strict_types no backend.
+* **Sincronização robusta**: Fila priorizada por dependência.
+* **Testes unitários**: Suite mobile validada.
