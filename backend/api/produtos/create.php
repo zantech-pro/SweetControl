@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once dirname(__DIR__) . '/_bootstrap.php';
 
@@ -9,6 +9,7 @@ require_fields($input, ['nome', 'preco_venda', 'data_validade']);
 $usuarioId = resolve_user_id($input);
 $nome = trim((string) $input['nome']);
 $categoriaId = to_nullable_int($input['categoria_id'] ?? null);
+$precoCusto = to_nullable_float($input['preco_custo'] ?? null);
 $precoVenda = to_nullable_float($input['preco_venda'] ?? null);
 $quantidadeEstoque = to_nullable_int($input['quantidade_estoque'] ?? 0) ?? 0;
 $estoqueMinimo = to_nullable_int($input['estoque_minimo'] ?? 0) ?? 0;
@@ -40,42 +41,41 @@ if ($categoriaId !== null) {
 }
 
 $hasDataValidade = column_exists('produtos', 'data_validade');
+$hasPrecoCusto = column_exists('produtos', 'preco_custo');
 
 try {
-    if ($hasDataValidade) {
-        $stmt = db()->prepare(
-            'INSERT INTO produtos
-            (usuario_id, categoria_id, nome, preco_venda, quantidade_estoque, estoque_minimo, data_validade, status, criado_em, atualizado_em)
-            VALUES
-            (:usuario_id, :categoria_id, :nome, :preco_venda, :quantidade_estoque, :estoque_minimo, :data_validade, :status, NOW(), NOW())'
-        );
-        $stmt->execute([
-            ':usuario_id' => $usuarioId,
-            ':categoria_id' => $categoriaId,
-            ':nome' => $nome,
-            ':preco_venda' => $precoVenda,
-            ':quantidade_estoque' => $quantidadeEstoque,
-            ':estoque_minimo' => $estoqueMinimo,
-            ':data_validade' => $dataValidade,
-            ':status' => $status,
-        ]);
-    } else {
-        $stmt = db()->prepare(
-            'INSERT INTO produtos
-            (usuario_id, categoria_id, nome, preco_venda, quantidade_estoque, estoque_minimo, status, criado_em, atualizado_em)
-            VALUES
-            (:usuario_id, :categoria_id, :nome, :preco_venda, :quantidade_estoque, :estoque_minimo, :status, NOW(), NOW())'
-        );
-        $stmt->execute([
-            ':usuario_id' => $usuarioId,
-            ':categoria_id' => $categoriaId,
-            ':nome' => $nome,
-            ':preco_venda' => $precoVenda,
-            ':quantidade_estoque' => $quantidadeEstoque,
-            ':estoque_minimo' => $estoqueMinimo,
-            ':status' => $status,
-        ]);
+    $fields = 'usuario_id, categoria_id, nome, preco_venda, quantidade_estoque, estoque_minimo';
+    $values = ':usuario_id, :categoria_id, :nome, :preco_venda, :quantidade_estoque, :estoque_minimo';
+    if ($hasPrecoCusto) {
+        $fields .= ', preco_custo';
+        $values .= ', :preco_custo';
     }
+    if ($hasDataValidade) {
+        $fields .= ', data_validade';
+        $values .= ', :data_validade';
+    }
+    $fields .= ', status, criado_em, atualizado_em';
+    $values .= ', :status, NOW(), NOW()';
+
+    $stmt = db()->prepare(
+        sprintf('INSERT INTO produtos (%s) VALUES (%s)', $fields, $values)
+    );
+    $params = [
+        ':usuario_id' => $usuarioId,
+        ':categoria_id' => $categoriaId,
+        ':nome' => $nome,
+        ':preco_venda' => $precoVenda,
+        ':quantidade_estoque' => $quantidadeEstoque,
+        ':estoque_minimo' => $estoqueMinimo,
+        ':status' => $status,
+    ];
+    if ($hasPrecoCusto) {
+        $params[':preco_custo'] = $precoCusto;
+    }
+    if ($hasDataValidade) {
+        $params[':data_validade'] = $dataValidade;
+    }
+    $stmt->execute($params);
 } catch (Throwable $e) {
     json_response(500, [
         'success' => false,

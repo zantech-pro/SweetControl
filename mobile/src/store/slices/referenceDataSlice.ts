@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+﻿import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export type Categoria = {
   id: number;
@@ -13,6 +13,7 @@ export type Produto = {
   nome: string;
   categoria_id?: number | null;
   preco_venda?: number | null;
+  preco_custo?: number | null;
   quantidade_estoque?: number | null;
   estoque_minimo?: number | null;
   data_validade?: string | null;
@@ -27,10 +28,22 @@ export type Cliente = {
   email?: string | null;
 };
 
+export type Fornecedor = {
+  id: number;
+  usuario_id: number;
+  nome: string;
+  telefone?: string | null;
+  email?: string | null;
+  contato?: string | null;
+  prazo_entrega_dias?: number | null;
+  observacoes?: string | null;
+};
+
 type ReferenceDataState = {
   categorias: Categoria[];
   produtos: Produto[];
   clientes: Cliente[];
+  fornecedores: Fornecedor[];
   lastUpdatedAt: string | null;
 };
 
@@ -38,6 +51,7 @@ const initialState: ReferenceDataState = {
   categorias: [],
   produtos: [],
   clientes: [],
+  fornecedores: [],
   lastUpdatedAt: null,
 };
 
@@ -55,6 +69,10 @@ export const referenceDataSlice = createSlice({
     },
     setClientes: (state, action: PayloadAction<Cliente[]>) => {
       state.clientes = action.payload;
+      state.lastUpdatedAt = new Date().toISOString();
+    },
+    setFornecedores: (state, action: PayloadAction<Fornecedor[]>) => {
+      state.fornecedores = action.payload;
       state.lastUpdatedAt = new Date().toISOString();
     },
     addCategoriaLocal: (state, action: PayloadAction<Categoria>) => {
@@ -106,6 +124,7 @@ export const referenceDataSlice = createSlice({
         nome: string;
         categoria_id?: number | null;
         preco_venda?: number | null;
+        preco_custo?: number | null;
         quantidade_estoque?: number | null;
         estoque_minimo?: number | null;
         data_validade?: string | null;
@@ -121,6 +140,7 @@ export const referenceDataSlice = createSlice({
       produto.nome = action.payload.nome;
       produto.categoria_id = action.payload.categoria_id ?? null;
       produto.preco_venda = action.payload.preco_venda ?? null;
+      produto.preco_custo = action.payload.preco_custo ?? null;
       produto.quantidade_estoque = action.payload.quantidade_estoque ?? null;
       produto.estoque_minimo = action.payload.estoque_minimo ?? null;
       produto.data_validade = action.payload.data_validade ?? null;
@@ -193,6 +213,51 @@ export const referenceDataSlice = createSlice({
       );
       state.lastUpdatedAt = new Date().toISOString();
     },
+    addFornecedorLocal: (state, action: PayloadAction<Fornecedor>) => {
+      state.fornecedores.unshift(action.payload);
+      state.lastUpdatedAt = new Date().toISOString();
+    },
+    updateFornecedorLocal: (
+      state,
+      action: PayloadAction<{
+        id: number;
+        usuario_id: number;
+        nome: string;
+        telefone?: string | null;
+        email?: string | null;
+        contato?: string | null;
+        prazo_entrega_dias?: number | null;
+        observacoes?: string | null;
+      }>
+    ) => {
+      const fornecedor = state.fornecedores.find(
+        (item) =>
+          item.id === action.payload.id &&
+          item.usuario_id === action.payload.usuario_id
+      );
+      if (!fornecedor) return;
+
+      fornecedor.nome = action.payload.nome;
+      fornecedor.telefone = action.payload.telefone ?? null;
+      fornecedor.email = action.payload.email ?? null;
+      fornecedor.contato = action.payload.contato ?? null;
+      fornecedor.prazo_entrega_dias = action.payload.prazo_entrega_dias ?? null;
+      fornecedor.observacoes = action.payload.observacoes ?? null;
+      state.lastUpdatedAt = new Date().toISOString();
+    },
+    removeFornecedorLocal: (
+      state,
+      action: PayloadAction<{ id: number; usuario_id: number }>
+    ) => {
+      state.fornecedores = state.fornecedores.filter(
+        (item) =>
+          !(
+            item.id === action.payload.id &&
+            item.usuario_id === action.payload.usuario_id
+          )
+      );
+      state.lastUpdatedAt = new Date().toISOString();
+    },
     clearReferenceData: () => initialState,
   },
 });
@@ -201,6 +266,7 @@ export const {
   setCategorias,
   setProdutos,
   setClientes,
+  setFornecedores,
   addCategoriaLocal,
   updateCategoriaLocal,
   removeCategoriaLocal,
@@ -211,6 +277,9 @@ export const {
   addClienteLocal,
   updateClienteLocal,
   removeClienteLocal,
+  addFornecedorLocal,
+  updateFornecedorLocal,
+  removeFornecedorLocal,
   clearReferenceData,
 } = referenceDataSlice.actions;
 export default referenceDataSlice.reducer;

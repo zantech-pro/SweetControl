@@ -36,6 +36,12 @@
 - `DELETE /clientes/delete.php`
 - `GET /clientes/list.php`
 
+### Fornecedores
+- `POST /fornecedores/create.php`
+- `PUT /fornecedores/update.php`
+- `DELETE /fornecedores/delete.php`
+- `GET /fornecedores/list.php`
+
 ### Vendas / Caixa
 - `POST /vendas/create.php`
 - `GET /vendas/list.php`

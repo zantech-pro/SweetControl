@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Redirect, Tabs, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -30,11 +30,11 @@ export default function TabsLayout() {
         <View style={styles.menuOverlay}>
           <TouchableOpacity style={styles.menuBackdrop} onPress={() => setMenuOpen(false)} />
           <View style={[styles.menuPanel, { backgroundColor: activeTheme.card }]}>
-            <Text style={[styles.menuTitle, { color: activeTheme.text }]}>Configuração</Text>
+            <Text style={[styles.menuTitle, { color: activeTheme.text }]}>Configuracao</Text>
 
             <ScrollView style={styles.menuScroll} contentContainerStyle={styles.menuContent}>
-              <Text style={styles.sectionTitle}>Sincronização</Text>
-              <Text style={styles.smallText}>Usuário ativo: {activeUserId ?? '-'}</Text>
+              <Text style={styles.sectionTitle}>Sincronizacao</Text>
+              <Text style={styles.smallText}>Usuario ativo: {activeUserId ?? '-'}</Text>
               <Text style={styles.smallText}>
                 Pendentes: {syncQueue.pendingSync.filter((item) => item.usuario_id === activeUserId).length}
               </Text>
@@ -60,7 +60,7 @@ export default function TabsLayout() {
                 style={[styles.menuBtn, { backgroundColor: '#c62828' }]}
                 onPress={() => dispatch(clearFailedSyncItems())}
               >
-                <Text style={styles.btnText}>Limpar Pendências com Erro</Text>
+                <Text style={styles.btnText}>Limpar Pendencias com Erro</Text>
               </TouchableOpacity>
 
               <Text style={styles.sectionTitle}>Tema</Text>
@@ -95,9 +95,9 @@ export default function TabsLayout() {
                 <Text style={styles.btnText}>Sair</Text>
               </TouchableOpacity>
 
-              <Text style={styles.sectionTitle}>Pendências de Sync</Text>
+              <Text style={styles.sectionTitle}>Pendencias de Sync</Text>
               {syncQueue.pendingSync.filter((item) => item.usuario_id === activeUserId).length === 0 ? (
-                <Text style={styles.smallText}>Sem pendências para este usuário.</Text>
+                <Text style={styles.smallText}>Sem pendencias para este usuario.</Text>
               ) : (
                 syncQueue.pendingSync
                   .filter((item) => item.usuario_id === activeUserId)
@@ -192,6 +192,15 @@ export default function TabsLayout() {
             title: 'Clientes',
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="people-outline" color={color} size={size} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="fornecedores"
+          options={{
+            title: 'Fornecedores',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="briefcase-outline" color={color} size={size} />
             ),
           }}
         />

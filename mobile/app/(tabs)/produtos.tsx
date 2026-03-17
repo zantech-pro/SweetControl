@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -41,6 +41,7 @@ export default function Produtos() {
 
   const [nome, setNome] = useState('');
   const [precoVenda, setPrecoVenda] = useState('');
+  const [precoCusto, setPrecoCusto] = useState('');
   const [quantidadeEstoque, setQuantidadeEstoque] = useState('');
   const [estoqueMinimo, setEstoqueMinimo] = useState('');
   const [dataValidade, setDataValidade] = useState('');
@@ -55,6 +56,7 @@ export default function Produtos() {
   function resetForm() {
     setNome('');
     setPrecoVenda('');
+    setPrecoCusto('');
     setQuantidadeEstoque('');
     setEstoqueMinimo('');
     setDataValidade('');
@@ -80,12 +82,17 @@ export default function Produtos() {
     }
 
     const preco = parseCurrencyInputBRL(precoVenda);
+    const custo = precoCusto.trim() ? parseCurrencyInputBRL(precoCusto) : null;
     const estoque = quantidadeEstoque.trim() ? Number(quantidadeEstoque) : null;
     const minimo = estoqueMinimo.trim() ? Number(estoqueMinimo) : null;
     const dataValidadeISO = parseDateBRToISO(dataValidade);
 
     if (Number.isNaN(preco) || preco <= 0) {
       Alert.alert('Validacao', 'Preco de venda invalido.');
+      return;
+    }
+    if (custo !== null && (Number.isNaN(custo) || custo < 0)) {
+      Alert.alert('Validacao', 'Custo de insumos invalido.');
       return;
     }
     if (estoque !== null && Number.isNaN(estoque)) {
@@ -109,6 +116,7 @@ export default function Produtos() {
           nome: nomeNormalizado,
           categoria_id: categoriaId,
           preco_venda: preco,
+          preco_custo: custo,
           quantidade_estoque: estoque,
           estoque_minimo: minimo,
           data_validade: dataValidadeISO,
@@ -127,6 +135,7 @@ export default function Produtos() {
             nome: nomeNormalizado,
             categoria_id: categoriaId,
             preco_venda: preco,
+            preco_custo: custo,
             quantidade_estoque: estoque,
             estoque_minimo: minimo,
             data_validade: dataValidadeISO,
@@ -146,6 +155,7 @@ export default function Produtos() {
         nome: nomeNormalizado,
         categoria_id: categoriaId,
         preco_venda: preco,
+        preco_custo: custo,
         quantidade_estoque: estoque,
         estoque_minimo: minimo,
         data_validade: dataValidadeISO,
@@ -165,6 +175,7 @@ export default function Produtos() {
           nome: nomeNormalizado,
           categoria_id: categoriaId,
           preco_venda: preco,
+          preco_custo: custo,
           quantidade_estoque: estoque,
           estoque_minimo: minimo,
           data_validade: dataValidadeISO,
@@ -183,11 +194,13 @@ export default function Produtos() {
     produtoQtd?: number | null,
     produtoCategoriaId?: number | null,
     produtoEstoqueMinimo?: number | null,
-    produtoDataValidade?: string | null
+    produtoDataValidade?: string | null,
+    produtoCusto?: number | null
   ) {
     setEditandoId(id);
     setNome(produtoNome);
     setPrecoVenda(produtoPreco ? formatCurrencyBRL(produtoPreco) : '');
+    setPrecoCusto(produtoCusto ? formatCurrencyBRL(produtoCusto) : '');
     setQuantidadeEstoque(produtoQtd?.toString() ?? '');
     setCategoriaId(produtoCategoriaId ?? null);
     setEstoqueMinimo(produtoEstoqueMinimo?.toString() ?? '');
@@ -251,6 +264,13 @@ export default function Produtos() {
           value={precoVenda}
           onChangeText={(value) => setPrecoVenda(maskCurrencyInputBRL(value))}
           placeholder="Preco de venda (R$ 0,00)"
+          keyboardType="decimal-pad"
+          style={styles.input}
+        />
+        <TextInput
+          value={precoCusto}
+          onChangeText={(value) => setPrecoCusto(maskCurrencyInputBRL(value))}
+          placeholder="Preco de custo (R$ 0,00)"
           keyboardType="decimal-pad"
           style={styles.input}
         />
@@ -327,6 +347,9 @@ export default function Produtos() {
               <Text style={[styles.itemNome, { color: activeTheme.text }]}>{item.nome}</Text>
               <Text style={styles.itemDescricao}>Categoria: {categoriaNome(item.categoria_id)}</Text>
               <Text style={styles.itemDescricao}>Preco: {formatCurrencyBRL(item.preco_venda ?? 0)}</Text>
+              <Text style={styles.itemDescricao}>
+                Preco custo: {formatCurrencyBRL(item.preco_custo ?? 0)}
+              </Text>
               <Text style={styles.itemDescricao}>Estoque: {item.quantidade_estoque ?? 0}</Text>
               <Text style={styles.itemDescricao}>Minimo: {item.estoque_minimo ?? 0}</Text>
               <Text style={styles.itemDescricao}>
@@ -344,7 +367,8 @@ export default function Produtos() {
                     item.quantidade_estoque,
                     item.categoria_id,
                     item.estoque_minimo,
-                    item.data_validade
+                    item.data_validade,
+                    item.preco_custo
                   )
                 }
               >

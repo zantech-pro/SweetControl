@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once dirname(__DIR__) . '/_bootstrap.php';
 
@@ -7,9 +7,11 @@ $usuarioId = isset($_GET['usuario_id']) ? (int) $_GET['usuario_id'] : resolve_us
 
 $hasDataValidade = column_exists('produtos', 'data_validade');
 $validadeField = $hasDataValidade ? 'p.data_validade' : 'NULL as data_validade';
+$hasPrecoCusto = column_exists('produtos', 'preco_custo');
+$precoCustoField = $hasPrecoCusto ? 'p.preco_custo' : 'NULL as preco_custo';
 
 $sql = "
-SELECT p.id, p.usuario_id, p.categoria_id, p.nome, p.preco_venda, p.quantidade_estoque, p.estoque_minimo,
+SELECT p.id, p.usuario_id, p.categoria_id, p.nome, p.preco_venda, {$precoCustoField}, p.quantidade_estoque, p.estoque_minimo,
        {$validadeField},
        p.status, c.nome as categoria_nome
 FROM produtos p
@@ -22,4 +24,3 @@ $stmt = db()->prepare($sql);
 $stmt->execute([':usuario_id' => $usuarioId]);
 
 json_response(200, ['success' => true, 'items' => $stmt->fetchAll()]);
-

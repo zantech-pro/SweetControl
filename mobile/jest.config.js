@@ -1,5 +1,7 @@
+﻿const expoPreset = require('jest-expo/jest-preset');
+
 module.exports = {
-  preset: 'jest-expo',
+  ...expoPreset,
   testMatch: ['**/*.test.ts'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   clearMocks: true,
